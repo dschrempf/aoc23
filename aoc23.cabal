@@ -92,6 +92,15 @@ executable fetch
     , exceptions
     , http-conduit
 
+executable scratch
+  import:          common, exec
+  main-is:         Scratch.hs
+  hs-source-dirs:  app
+  other-modules:
+  autogen-modules:
+  ghc-options:
+  build-depends:
+
 executable day01
   import:          common, exec
   main-is:         Day01.hs
