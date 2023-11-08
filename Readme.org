@@ -2,3 +2,6 @@
 
 At some point, this repository will probably contain the solution to the [[https://adventofcode.com/][Advent
 of Code 2023]].
+
+* Links
+- [[https://byorgey.wordpress.com/2020/05/16/competitive-programming-in-haskell-summer-series/][Competitive programming in Haskell]]
