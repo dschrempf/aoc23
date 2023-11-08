@@ -20,8 +20,9 @@ import qualified Data.Map.Strict as M
 
 type OccurrenceMap a = M.Map a Int
 
-addElem :: Ord a => OccurrenceMap a -> a -> OccurrenceMap a
+addElem :: (Ord a) => OccurrenceMap a -> a -> OccurrenceMap a
 addElem m k = M.insertWith (const succ) k 1 m
 
+-- | Count the number of occurrences of things in a container.
 count :: (Foldable f, Ord a) => f a -> OccurrenceMap a
 count = foldl' addElem M.empty

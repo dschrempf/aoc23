@@ -17,13 +17,14 @@ where
 
 import Control.DeepSeq
 
--- Apply a function @n@ times.
-nTimesStrict :: NFData a => Int -> (a -> a) -> a -> a
+-- | Apply a function @n@ times.
+nTimesStrict :: (NFData a) => Int -> (a -> a) -> a -> a
 nTimesStrict n f x = case compare n 1 of
   LT -> error $ "nTimesStrict: n zero or negative: " ++ show n
   EQ -> force $ f x
   GT -> nTimesStrict (n - 1) f $ force $ f x
 
+-- | Apply a function @n@ times.
 nTimesLazy :: Int -> (a -> a) -> a -> a
 nTimesLazy n f x = case compare n 1 of
   LT -> error $ "nTimesLazy: n zero or negative: " ++ show n
