@@ -66,6 +66,7 @@ library
     Aoc.Function
     Aoc.List
     Aoc.Occurrence
+    Aoc.Parse
     Aoc.Prime
     Aoc.String
 
