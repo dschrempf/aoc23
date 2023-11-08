@@ -61,9 +61,13 @@ library
   import:          common, lib
   exposed-modules:
     Aoc.Array
+    Aoc.Char
+    Aoc.Factor
     Aoc.Function
     Aoc.List
     Aoc.Occurrence
+    Aoc.Prime
+    Aoc.String
 
   hs-source-dirs:  src
   other-modules:
