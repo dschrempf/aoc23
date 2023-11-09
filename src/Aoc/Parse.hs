@@ -10,7 +10,7 @@
 --
 -- Creation date: Wed Nov  8 12:21:12 2023.
 module Aoc.Parse
-  ( parse,
+  ( parseChallenge,
   )
 where
 
@@ -19,5 +19,5 @@ import Data.Attoparsec.ByteString.Char8 (Parser, parseOnly)
 import qualified Data.ByteString.Char8 as BS
 import Data.Functor ((<&>))
 
-parse :: Challenge -> Parser a -> IO a
-parse challenge parser = BS.readFile (getInputFile challenge) <&> either error id . parseOnly parser
+parseChallenge :: Challenge -> Parser a -> IO a
+parseChallenge challenge parser = BS.readFile (getInputFile challenge) <&> either error id . parseOnly parser
