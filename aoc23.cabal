@@ -62,6 +62,7 @@ library
   exposed-modules:
     Aoc.Array
     Aoc.Char
+    Aoc.Def
     Aoc.Factor
     Aoc.Function
     Aoc.List

@@ -14,9 +14,10 @@ module Aoc.Parse
   )
 where
 
+import Aoc.Def (Challenge, getInputFile)
 import Data.Attoparsec.ByteString.Char8 (Parser, parseOnly)
 import qualified Data.ByteString.Char8 as BS
-import Data.Functor
+import Data.Functor ((<&>))
 
-parse :: FilePath -> Parser a -> IO a
-parse file parser = BS.readFile file <&> either error id . parseOnly parser
+parse :: Challenge -> Parser a -> IO a
+parse challenge parser = BS.readFile (getInputFile challenge) <&> either error id . parseOnly parser

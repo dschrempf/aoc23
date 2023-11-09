@@ -2,6 +2,7 @@
 
 module Main where
 
+import Aoc.Def (Challenge (F), Day, getInputFile)
 import Configuration.Dotenv (defaultConfig, loadFile)
 import Control.Monad.Catch (MonadThrow)
 import qualified Data.ByteString as B
@@ -10,31 +11,33 @@ import Network.HTTP.Conduit (Request)
 import Network.HTTP.Simple (addRequestHeader, getResponseBody, httpBS, parseRequest)
 import System.Directory (doesFileExist, getFileSize)
 import System.Environment (getArgs, lookupEnv)
-import Text.Printf (printf)
+
+year :: Int
+year = 2022
 
 baseUrl :: String
 baseUrl = "https://adventofcode.com/"
 
-getRequest :: (MonadThrow m) => String -> Int -> Int -> m Request
-getRequest token year day = do
+getRequest :: (MonadThrow m) => String -> Day -> m Request
+getRequest token day = do
   req <- parseRequest route
   return $ addRequestHeader "cookie" (pack token) req
   where
     route = baseUrl <> show year <> "/day/" <> show day <> "/input"
 
-fetchInput :: Int -> Int -> FilePath -> IO ()
-fetchInput year day dir = do
-  isCached <- checkFileExistsWithData filepath
+fetchInput :: Day -> IO ()
+fetchInput day = do
+  isCached <- checkFileExistsWithData file
   token' <- lookupEnv "AOC_TOKEN"
   case (isCached, token') of
     (True, _) -> putStrLn "Input has been downloaded already."
     (False, Nothing) -> putStrLn "No session token."
     (False, Just token) -> do
-      req <- getRequest token year day
+      req <- getRequest token day
       response <- getResponseBody <$> httpBS req
-      B.writeFile filepath response
+      B.writeFile file response
   where
-    filepath = printf "%s/input%02d.txt" dir day
+    file = getInputFile (F day)
 
 checkFileExistsWithData :: FilePath -> IO Bool
 checkFileExistsWithData fp = do
@@ -49,4 +52,4 @@ main :: IO ()
 main = do
   loadFile defaultConfig
   [day] <- map read <$> getArgs
-  fetchInput 2022 day "inputs/"
+  fetchInput day
