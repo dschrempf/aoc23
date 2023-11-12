@@ -60,6 +60,7 @@ common exec
 library
   import:          common, lib
   exposed-modules:
+    Aoc
     Aoc.Array
     Aoc.Char
     Aoc.Def
