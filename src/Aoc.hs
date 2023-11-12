@@ -10,6 +10,9 @@
 --
 -- Creation date: Sun Nov 12 08:59:52 2023.
 module Aoc
-  (
+  ( parseChallengeB,
+    parseChallengeT,
   )
 where
+
+import Aoc.Parse (parseChallengeB, parseChallengeT)
