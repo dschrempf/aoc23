@@ -14,16 +14,13 @@ module Main
   )
 where
 
-import Aoc.Def (Challenge (..))
-import Aoc.Parse (parseChallenge)
-import Data.Attoparsec.ByteString.Char8 (Parser)
-import qualified Data.Attoparsec.ByteString.Char8 as A
-import Data.ByteString.Char8 (ByteString)
+import Aoc
+import qualified Data.Attoparsec.Text as A
 
-p :: Parser ByteString
+p :: ParserT
 p = A.takeWhile (const True)
 
 main :: IO ()
 main = do
-  d <- parseChallenge (F 1) p
+  d <- parseChallengeT (F 1) p
   print d
