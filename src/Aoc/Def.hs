@@ -10,7 +10,9 @@
 --
 -- Creation date: Thu Nov  9 09:58:58 2023.
 module Aoc.Def
-  ( Day,
+  ( Year,
+    year,
+    Day,
     Challenge (..),
     getInputFile,
   )
@@ -18,6 +20,11 @@ where
 
 import Numeric.Natural (Natural)
 import Text.Printf (printf)
+
+type Year = Natural
+
+year :: Year
+year = 2022
 
 type Day = Natural
 

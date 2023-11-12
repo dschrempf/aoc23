@@ -2,7 +2,7 @@
 
 module Main where
 
-import Aoc.Def (Challenge (F), Day, getInputFile)
+import Aoc.Def (Challenge (F), Day, getInputFile, year)
 import Configuration.Dotenv (defaultConfig, loadFile)
 import Control.Monad.Catch (MonadThrow)
 import qualified Data.ByteString as B
@@ -11,9 +11,6 @@ import Network.HTTP.Conduit (Request)
 import Network.HTTP.Simple (addRequestHeader, getResponseBody, httpBS, parseRequest)
 import System.Directory (doesFileExist, getFileSize)
 import System.Environment (getArgs, lookupEnv)
-
-year :: Int
-year = 2022
 
 baseUrl :: String
 baseUrl = "https://adventofcode.com/"
