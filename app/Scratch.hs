@@ -17,7 +17,7 @@ where
 import Aoc
 import qualified Data.Attoparsec.Text as A
 
-p :: ParserT
+p :: ParserT Text
 p = A.takeWhile (const True)
 
 main :: IO ()

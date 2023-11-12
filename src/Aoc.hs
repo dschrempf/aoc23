@@ -13,19 +13,13 @@ module Aoc
   ( Day,
     Challenge (..),
     parseChallengeB,
-    ParserB,
+    ByteString,
     parseChallengeT,
-    ParserT,
+    Text,
   )
 where
 
 import Aoc.Def (Challenge (..), Day)
 import Aoc.Parse (parseChallengeB, parseChallengeT)
-import qualified Data.Attoparsec.ByteString.Char8 as AB
-import qualified Data.Attoparsec.Text as AT
 import Data.ByteString.Char8 (ByteString)
 import Data.Text (Text)
-
-type ParserT = AT.Parser Text
-
-type ParserB = AB.Parser ByteString
