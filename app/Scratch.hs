@@ -15,10 +15,11 @@ module Main
 where
 
 import Aoc
-import qualified Data.Attoparsec.Text as A
+import Data.Attoparsec.Text
+import Prelude hiding (takeWhile)
 
-p :: ParserT Text
-p = A.takeWhile (const True)
+p :: Parser Text
+p = takeWhile (const True)
 
 main :: IO ()
 main = do

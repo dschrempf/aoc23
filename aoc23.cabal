@@ -67,6 +67,7 @@ library
     Aoc.Factor
     Aoc.Function
     Aoc.List
+    Aoc.Mod
     Aoc.Occurrence
     Aoc.Parse
     Aoc.Prime
