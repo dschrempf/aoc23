@@ -93,7 +93,10 @@ executable fetch
     , directory
     , dotenv
     , exceptions
+    , extra
+    , html-conduit
     , http-conduit
+    , xml-conduit
 
 executable scratch
   import:          common, exec
