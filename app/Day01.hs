@@ -37,30 +37,39 @@ solveLn = read . (\xs -> [head xs, last xs]) . filter isDigit . T.unpack
 
 pDigit :: String -> Maybe Int
 pDigit xs
-  | take 3 xs == "one" = Just 1
-  | take 3 xs == "two" = Just 2
-  | take 5 xs == "three" = Just 3
-  | take 4 xs == "four" = Just 4
-  | take 4 xs == "five" = Just 5
-  | take 3 xs == "six" = Just 6
-  | take 5 xs == "seven" = Just 7
-  | take 5 xs == "eight" = Just 8
-  | take 4 xs == "nine" = Just 9
   | null xs = Nothing
-  | isDigit $ head xs = Just $ readDigit $ head xs
+  | matchesDigit "one" = Just 1
+  | matchesDigit "two" = Just 2
+  | matchesDigit "three" = Just 3
+  | matchesDigit "four" = Just 4
+  | matchesDigit "five" = Just 5
+  | matchesDigit "six" = Just 6
+  | matchesDigit "seven" = Just 7
+  | matchesDigit "eight" = Just 8
+  | matchesDigit "nine" = Just 9
+  | isDigit x = Just $ readDigit x
   | otherwise = Nothing
+  where
+    matchesDigit :: String -> Bool
+    matchesDigit s = let l = length xs in take l xs == s
+    x = head xs
 
-getFirst :: String -> Int
-getFirst xs = fromJust $ asum $ map pDigit $ tails xs
+getFirstDigit :: String -> Int
+getFirstDigit xs = fromJust $ asum $ map pDigit $ tails xs
 
-getLast :: String -> Int
-getLast xs = fromJust $ asum $ map pDigit $ reverse $ tails xs
+getLastDigit :: String -> Int
+getLastDigit xs = fromJust $ asum $ map pDigit $ reverse $ tails xs
 
 main :: IO ()
 main = do
   d <- parseChallengeT (Challenge 1 Full) pInput
   print d
   print $ sum $ map solveLn d
-  let xs = map (getFirst . T.unpack) d
-      ys = map (getLast . T.unpack) d
-  print $ sum $ zipWith (\x y -> (10 * x) + y) xs ys
+  let firstDigits = map (getFirstDigit . T.unpack) d
+      lastDigits = map (getLastDigit . T.unpack) d
+  print $
+    sum $
+      zipWith
+        (\firstDigit lastDigit -> (10 * firstDigit) + lastDigit)
+        firstDigits
+        lastDigits
