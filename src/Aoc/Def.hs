@@ -24,16 +24,19 @@ import Text.Printf (printf)
 type Year = Natural
 
 year :: Year
-year = 2022
+year = 2023
 
 type Day = Natural
 
 data Challenge
-  = -- | Sample.
-    S Day
+  = -- | Sample one.
+    S1 Day
+  | -- | Sample two
+    S2 Day
   | -- | Full.
     F Day
 
 getInputFile :: Challenge -> String
-getInputFile (S n) = printf "inputs/day%02dsmpl.txt" n
+getInputFile (S1 n) = printf "inputs/day%02dsample1.txt" n
+getInputFile (S2 n) = printf "inputs/day%02dsample2.txt" n
 getInputFile (F n) = printf "inputs/day%02dfull.txt" n
