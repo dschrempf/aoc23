@@ -13,6 +13,7 @@ module Aoc.Def
   ( Year,
     year,
     Day,
+    ChallengeType (..),
     Challenge (..),
     getInputFile,
   )
@@ -28,15 +29,17 @@ year = 2023
 
 type Day = Natural
 
-data Challenge
+data ChallengeType
   = -- | Sample one.
-    S1 Day
+    Sample1
   | -- | Sample two
-    S2 Day
+    Sample2
   | -- | Full.
-    F Day
+    Full
+
+data Challenge = Challenge {challengeDay :: Day, challengeType :: ChallengeType}
 
 getInputFile :: Challenge -> String
-getInputFile (S1 n) = printf "inputs/day%02dsample1.txt" n
-getInputFile (S2 n) = printf "inputs/day%02dsample2.txt" n
-getInputFile (F n) = printf "inputs/day%02dfull.txt" n
+getInputFile (Challenge n Sample1) = printf "inputs/day%02dsample1.txt" n
+getInputFile (Challenge n Sample2) = printf "inputs/day%02dsample2.txt" n
+getInputFile (Challenge n Full) = printf "inputs/day%02dfull.txt" n

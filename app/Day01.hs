@@ -18,6 +18,7 @@ where
 
 import Aoc
 import Aoc.Char (readDigit)
+import Aoc.Def (ChallengeType (..))
 import Control.Applicative (asum)
 import Data.Attoparsec.Text (Parser, endOfInput, endOfLine, isEndOfLine, sepBy1', takeTill)
 import Data.Char (isDigit)
@@ -57,7 +58,7 @@ getLast xs = fromJust $ asum $ map pDigit $ reverse $ tails xs
 
 main :: IO ()
 main = do
-  d <- parseChallengeT (F 1) pInput
+  d <- parseChallengeT (Challenge 1 Full) pInput
   print d
   print $ sum $ map solveLn d
   let xs = map (getFirst . T.unpack) d

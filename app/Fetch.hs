@@ -1,8 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Main where
+module Main (main) where
 
-import Aoc.Def (Challenge (..), getInputFile, year)
+import Aoc.Def (Challenge (..), ChallengeType (..), getInputFile, year)
 import Configuration.Dotenv (defaultConfig, loadFile)
 import Control.Monad.Catch (MonadThrow)
 import qualified Data.ByteString as B
@@ -13,42 +13,42 @@ import System.Directory (doesFileExist, getFileSize)
 import System.Environment (getArgs, lookupEnv)
 
 baseUrl :: String
-baseUrl = "https://adventofcode.com/"
+baseUrl = "https://adventofcode.com/" <> show year <> "/day/"
+
+getRoute :: Challenge -> String
+getRoute (Challenge d Full) = baseUrl <> show d <> "/input"
+getRoute challenge = baseUrl <> show (challengeDay challenge)
 
 getRequest :: (MonadThrow m) => String -> Challenge -> m Request
-getRequest _ (S1 _) = error "not implemented"
-getRequest _ (S2 _) = error "not implemented"
-getRequest token (F day) = do
-  req <- parseRequest route
+getRequest token challenge = do
+  req <- parseRequest (getRoute challenge)
   return $ addRequestHeader "cookie" (pack token) req
-  where
-    route = baseUrl <> show year <> "/day/" <> show day <> "/input"
 
 fetchInput :: Challenge -> IO ()
-fetchInput x = do
+fetchInput challenge = do
   isCached <- checkFileExistsWithData file
   token' <- lookupEnv "AOC_TOKEN"
   case (isCached, token') of
     (True, _) -> putStrLn "Input has been downloaded already."
     (False, Nothing) -> putStrLn "No session token."
     (False, Just token) -> do
-      req <- getRequest token x
+      req <- getRequest token challenge
       response <- getResponseBody <$> httpBS req
       B.writeFile file response
   where
-    file = getInputFile x
+    file = getInputFile challenge
 
 checkFileExistsWithData :: FilePath -> IO Bool
-checkFileExistsWithData fp = do
-  exists <- doesFileExist fp
+checkFileExistsWithData file = do
+  exists <- doesFileExist file
   if not exists
     then return False
     else do
-      size <- getFileSize fp
+      size <- getFileSize file
       return $ size > 0
 
 main :: IO ()
 main = do
   loadFile defaultConfig
   [day] <- map read <$> getArgs
-  fetchInput (F day)
+  fetchInput (Challenge day Full)

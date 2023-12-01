@@ -15,6 +15,7 @@ module Main
 where
 
 import Aoc
+import Aoc.Def (ChallengeType (..))
 import Data.Attoparsec.Text
 import Prelude hiding (takeWhile)
 
@@ -23,5 +24,5 @@ p = takeWhile (const True)
 
 main :: IO ()
 main = do
-  d <- parseChallengeT (F 1) p
+  d <- parseChallengeT (Challenge 1 Full) p
   print d
