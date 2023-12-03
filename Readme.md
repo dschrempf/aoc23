@@ -14,4 +14,5 @@ of Code 2023](https://adventofcode.com/).
 
 -   **Day 1:** Part two was quite hard for a day 1 puzzle.
 -   **Day 2:** Writing the parser was a lot of fun!
+-   **Day 3:** A grid puzzle on day three &#x2014; that's a bit unexpected.
 

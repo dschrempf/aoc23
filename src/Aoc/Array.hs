@@ -16,22 +16,26 @@ module Aoc.Array
     neighborsNoDiagonal,
     neighbors3,
     neighborsNoDiagonal3,
-    break,
+    breakA,
+    filterA,
   )
 where
 
 import Data.Massiv.Array
-  ( Index (isSafeIndex),
+  ( Array,
+    Index (isSafeIndex),
     Ix2,
     Ix3,
     IxN (Ix3),
     Manifest,
     Size (size),
+    Source,
     Sz (Sz),
     Vector,
     findIndex,
     fromIx2,
     fromIx3,
+    ifoldlS,
     sliceAt,
     toIx2,
     toIx3,
@@ -111,7 +115,15 @@ neighborsNoDiagonal3 s p =
       ]
 
 -- | Like 'Data.List.break' but for arrays.
-break :: Manifest r e => (e -> Bool) -> Vector r e -> (Vector r e, Vector r e)
-break p xs = sliceAt i xs
+breakA :: (Manifest r e) => (e -> Bool) -> Vector r e -> (Vector r e, Vector r e)
+breakA p xs = sliceAt i xs
   where
     i = maybe (size xs) Sz $ findIndex p xs
+
+-- | Like 'Data.List.filter' but for arrays.
+filterA :: (Index ix, Source r e) => (e -> Bool) -> Array r ix e -> [ix]
+filterA f = ifoldlS accF []
+  where
+    accF ixs ix e
+      | f e = ix : ixs
+      | otherwise = ixs
