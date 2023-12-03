@@ -24,78 +24,74 @@ where
 import Data.Massiv.Array
   ( Array,
     Index (isSafeIndex),
-    Ix2,
+    Ix2 (..),
     Ix3,
-    IxN (Ix3),
+    IxN (..),
     Manifest,
     Size (size),
     Source,
     Sz (Sz),
     Vector,
     findIndex,
-    fromIx2,
-    fromIx3,
     ifoldlS,
     sliceAt,
-    toIx2,
-    toIx3,
   )
 import Prelude hiding (break)
 
-stencil :: Sz Ix2 -> Ix2 -> [(Int, Int)]
+stencil :: Sz Ix2 -> Ix2 -> [Ix2]
 stencil s p =
   [ p'
     | f <- [pred, id, succ],
       g <- [pred, id, succ],
-      let p' = (f i, g j),
-      isSafeIndex s (toIx2 p')
+      let p' = f i :. g j,
+      isSafeIndex s p'
   ]
   where
-    (i, j) = fromIx2 p
+    (i :. j) = p
 
 -- | Get the 8 neighbors of a field in a two-dimensional grid.
 neighbors :: Sz Ix2 -> Ix2 -> [Ix2]
 neighbors s p =
-  [ toIx2 (i', j')
-    | (i', j') <- stencil s p,
+  [ i' :. j'
+    | (i' :. j') <- stencil s p,
       not (i' == i && j' == j)
   ]
   where
-    (i, j) = fromIx2 p
+    (i :. j) = p
 
 -- | Like 'neighbors' but only get the 4 direct neighbors, and not the 4
 -- diagonal ones.
 neighborsNoDiagonal :: Sz Ix2 -> Ix2 -> [Ix2]
 neighborsNoDiagonal s p =
-  [ toIx2 (i', j')
-    | (i', j') <- stencil s p,
+  [ i' :. j'
+    | (i' :. j') <- stencil s p,
       not (i' == i && j' == j),
       i' == i || j' == j
   ]
   where
-    (i, j) = fromIx2 p
+    (i :. j) = p
 
-stencil3 :: Sz Ix3 -> Ix3 -> [(Int, Int, Int)]
+stencil3 :: Sz Ix3 -> Ix3 -> [Ix3]
 stencil3 s p =
   [ p'
     | f <- [pred, id, succ],
       g <- [pred, id, succ],
       h <- [pred, id, succ],
-      let p' = (f i, g j, h k),
-      isSafeIndex s (toIx3 p')
+      let p' = f i :> g j :. h k,
+      isSafeIndex s p'
   ]
   where
-    (i, j, k) = fromIx3 p
+    (i :> j :. k) = p
 
 -- | Get the 26 neighbors of a field in a three-dimensional grid.
 neighbors3 :: Sz Ix3 -> Ix3 -> [Ix3]
 neighbors3 s p =
-  [ toIx3 (i', j', k')
-    | (i', j', k') <- stencil3 s p,
+  [ i' :> j' :. k'
+    | (i' :> j' :. k') <- stencil3 s p,
       not (i' == i && j' == j && k' == k)
   ]
   where
-    (i, j, k) = fromIx3 p
+    (i :> j :. k) = p
 
 -- | Like 'neighbors3' but only get the 6 direct neighbors, and not the 20
 -- diagonal ones.

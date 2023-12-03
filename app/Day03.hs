@@ -33,6 +33,7 @@ import Data.Attoparsec.Text
 import Data.Char (isPrint)
 import Data.Ix (Ix (..))
 import Data.List (find, nub)
+import Data.Massiv.Array (Ix2 (..))
 import qualified Data.Massiv.Array as A
 import Data.Maybe (mapMaybe)
 
@@ -85,8 +86,8 @@ hasSymbolNeighbor xs i =
 getIxRange :: Number -> [A.Ix2]
 getIxRange (Number ix d _) = range (ix, ix')
   where
-    (i, j) = A.fromIx2 ix
-    ix' = A.toIx2 (i, j + d - 1)
+    (i :. j) = ix
+    ix' = i :. j + d - 1
 
 isPartNumberWith :: Schematic -> Number -> Bool
 isPartNumberWith xs x = any (hasSymbolNeighbor xs) (getIxRange x)
