@@ -5,6 +5,15 @@ At some point, this repository will probably contain the solution to the [Advent
 of Code 2023](https://adventofcode.com/).
 
 
+# Downloading input and sample files
+
+I added automatic fetching of the full input as well as the samples (see
+[Fetch.hs](https://github.com/dschrempf/aoc23/blob/main/app/Fetch.hs)). For example,
+
+    cabal run fetch 1    # Fetch full input of day one.
+    cabal run fetch 1 1  # Fetch sample one of day one.
+
+
 # Links
 
 -   [Competitive programming in Haskell](https://byorgey.wordpress.com/2020/05/16/competitive-programming-in-haskell-summer-series/)
