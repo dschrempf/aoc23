@@ -32,7 +32,7 @@ import Data.Attoparsec.Text
   )
 import qualified Data.Set as S
 
-data Card = Card {number :: Int, wins :: S.Set Int, picks :: S.Set Int}
+data Card = Card {number :: Int, multiplicity :: Int, wins :: S.Set Int, picks :: S.Set Int}
   deriving (Show)
 
 pCard :: Parser Card
@@ -47,19 +47,44 @@ pCard = do
   _ <- char '|'
   skipSpace
   ps <- decimal `sepBy1'` skipSpace
-  return $ Card n (S.fromList ws) (S.fromList ps)
+  return $ Card n 1 (S.fromList ws) (S.fromList ps)
 
 pInput :: Parser [Card]
 pInput = pCard `sepBy1'` endOfLine <* endOfLine <* endOfInput
 
 winningPicks :: Card -> S.Set Int
-winningPicks (Card _ ws ps) = S.intersection ws ps
+winningPicks (Card _ _ ws ps) = S.intersection ws ps
 
 gradeIntersectionPart1 :: S.Set Int -> Int
 gradeIntersectionPart1 xs
   | null xs = 0
   | otherwise = 2 ^ pred (S.size xs)
+
+type Hand = [Card]
+
+gradeCardPart2 :: Card -> Int
+gradeCardPart2 = S.size . winningPicks
+
+addNToCardI :: Int -> Hand -> Int -> Hand
+addNToCardI n xs i = take i xs ++ [Card num (mul + n) ws ps] ++ drop (succ i) xs
+  where
+    (Card num mul ws ps) = xs !! i
+
+gradeI :: Hand -> Int -> Hand
+gradeI xs i =
+  foldl (addNToCardI mul) xs $
+    filter (< length xs) $
+      take nWins [succ i ..]
+  where
+    cardToGrade = xs !! i
+    mul = multiplicity cardToGrade
+    nWins = gradeCardPart2 cardToGrade
+
+gradeAll :: Hand -> Hand
+gradeAll xs = foldl gradeI xs [0 .. (pred $ length xs)]
+
 main :: IO ()
 main = do
   d <- parseChallengeT (Full 4) pInput
   print $ sum $ map (gradeIntersectionPart1 . winningPicks) d
+  print $ sum $ map multiplicity $ gradeAll d
