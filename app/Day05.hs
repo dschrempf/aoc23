@@ -19,6 +19,7 @@ module Main
 where
 
 import Aoc (Challenge (..), parseChallengeT)
+import Control.Applicative (asum)
 import Data.Attoparsec.Text
   ( Parser,
     decimal,
@@ -29,10 +30,13 @@ import Data.Attoparsec.Text
     skipWhile,
     string,
   )
+import Data.Maybe (fromMaybe)
 
-type Seeds = [Int]
+type Number = Int
 
-pSeeds :: Parser Seeds
+type Numbers = [Number]
+
+pSeeds :: Parser Numbers
 pSeeds = string "seeds:" *> skipSpace *> decimal `sepBy1'` skipSpace
 
 data MapEntry = MapEntry {destination :: Int, source :: Int, range :: Int}
@@ -49,7 +53,7 @@ skipRestOfLine = skipWhile (not . isEndOfLine) >> endOfLine
 pMap :: Parser Map
 pMap = skipRestOfLine *> pMapEntry `sepBy1'` endOfLine
 
-pInput :: Parser (Seeds, [Map])
+pInput :: Parser (Numbers, [Map])
 pInput = do
   s <- pSeeds
   endOfLine
@@ -57,8 +61,33 @@ pInput = do
   ms <- pMap `sepBy1'` (endOfLine <* endOfLine)
   return (s, ms)
 
+mapNumberMapEntry :: Number -> MapEntry -> Maybe Number
+mapNumberMapEntry n (MapEntry d s r)
+  | delta < 0 = Nothing
+  | delta < r = Just $ d + delta
+  | otherwise = Nothing
+  where
+    delta = n - s
+
+mapNumberMap :: Number -> Map -> Number
+mapNumberMap n m = fromMaybe n (asum $ map (mapNumberMapEntry n) m)
+
+mapNumber :: [Map] -> Number -> Number
+mapNumber ms n = foldl mapNumberMap n ms
+
+getSeeds2 :: Numbers -> Numbers
+getSeeds2 = go
+  where
+    go [] = []
+    go (x : y : xs) = [x .. x + y - 1] ++ go xs
+    go _ = error "uneven"
+
 main :: IO ()
 main = do
-  d <- parseChallengeT (Sample 5 1) pInput
-  print $ fst d
-  mapM_ print $ snd d
+  d <- parseChallengeT (Full 5) pInput
+  let seeds1 = fst d
+      ms = snd d
+      f = mapNumber ms
+  print $ minimum $ map f seeds1
+  let seeds2 = getSeeds2 $ fst d
+  print $ minimum $ map f seeds2
