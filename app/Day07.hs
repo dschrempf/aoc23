@@ -25,7 +25,7 @@ import Data.List (nub, sort, sortBy, sortOn)
 import qualified Data.Map.Strict as M
 import Data.Ord (Down (..), comparing)
 
-data Card = C2 | C3 | C4 | C5 | C6 | C7 | C8 | C9 | T | J | Q | K | A
+data Card = J | C2 | C3 | C4 | C5 | C6 | C7 | C8 | C9 | T | Q | K | A
   deriving (Show, Enum, Eq, Ord)
 
 pCard :: Parser Card
@@ -48,12 +48,19 @@ pCard = a <|> k <|> q <|> j <|> t <|> c9 <|> c8 <|> c7 <|> c6 <|> c5 <|> c4 <|> 
 newtype Hand = Hand {cards :: [Card]}
   deriving (Show, Eq)
 
-data Type = HighCard | OnePair | TwoPair | ThreeOfAKind | FullHouse | FourOfAKind | FiveOfAKind
+data Type
+  = HighCard
+  | OnePair
+  | TwoPair
+  | ThreeOfAKind
+  | FullHouse
+  | FourOfAKind
+  | FiveOfAKind
   deriving (Show, Eq, Ord)
 
 getType :: Hand -> Type
 getType (Hand cs)
-  | length uniques == 1 = FiveOfAKind
+  | head counts == 5 = FiveOfAKind
   | counts == [4, 1] = FourOfAKind
   | counts == [3, 2] = FullHouse
   | head counts == 3 = ThreeOfAKind
@@ -61,9 +68,14 @@ getType (Hand cs)
   | head counts == 2 = OnePair
   | otherwise = HighCard
   where
-    sorted = sort cs
-    uniques = nub sorted
-    counts = sortBy (comparing Down) (M.elems $ count sorted)
+    nJs = length $ filter (== J) cs
+    csNoJ = filter (/= J) cs
+    sorted = sort csNoJ
+    occurences = M.elems $ count sorted
+    counts' = sortBy (comparing Down) occurences
+    counts
+      | null counts' = [5]
+      | otherwise = (head counts' + nJs) : tail counts'
 
 instance Ord Hand where
   l `compare` r = case lT `compare` rT of
@@ -97,5 +109,5 @@ main :: IO ()
 main = do
   d <- parseChallengeT (Full 7) pGame
   let ss = sortOn hand d
-  mapM_ print $ map (\s -> (s, getType $ hand s)) ss
+  putStrLn "This only solves part 2, because the Ord types are different."
   print $ sum $ zipWith (\rank (Move _ b) -> rank * b) [1 ..] ss
