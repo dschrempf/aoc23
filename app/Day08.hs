@@ -21,7 +21,6 @@ where
 import Aoc (parseChallengeT)
 import Aoc.Def (Challenge (..))
 import Control.Applicative (Alternative (..))
-import Control.DeepSeq (force)
 import Data.Attoparsec.Text
   ( Parser,
     char,
@@ -92,30 +91,21 @@ getDestination R = right
 jump :: Direction -> Network -> Node -> Node
 jump dir net node = getDestination dir $ net M.! node
 
-walk :: Network -> [Direction] -> Int
-walk net dirs = go "AAA" 1 dirs
+walk :: Network -> [Direction] -> Node -> (Node, Int)
+walk net dirs s = go s 1 dirs
   where
     go n l (d : ds) =
       let !n' = jump d net n
-       in if n' == "ZZZ"
-            then l
+       in if last n' == 'Z'
+            then (n', l)
             else let !l' = succ l in go n' l' ds
     go n l [] = go n l dirs
-
-simWalk :: Network -> [Direction] -> [Node] -> Int
-simWalk net dirs = go 1 dirs
-  where
-    go l (d : ds) ns =
-      let ns' = force $ map (jump d net) ns
-       in if all ((== 'Z') . last) ns'
-            then l
-            else let !l' = succ l in go l' ds ns'
-    go l [] ns = go l dirs ns
 
 main :: IO ()
 main = do
   (dirs, edges) <- parseChallengeT (Full 8) pInput
   let net = toNetwork edges
-  print $ walk net dirs
+  print $ snd $ walk net dirs "AAA"
   let starts = filter ((== 'A') . last) $ map start edges
-  print $ simWalk net dirs starts
+      firstEnd = map (walk net dirs) starts
+  print $ foldl lcm 1 $ map snd firstEnd
