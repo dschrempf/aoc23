@@ -16,5 +16,52 @@ module Main
   )
 where
 
+import Aoc (parseChallengeT)
+import Aoc.Def (Challenge (..))
+import Data.Attoparsec.Text
+  ( Parser,
+    char,
+    decimal,
+    endOfInput,
+    endOfLine,
+    sepBy1',
+    signed,
+  )
+import Data.List (singleton)
+
+diffs :: [Int] -> [Int]
+diffs (x : y : zs) = (y - x) : diffs (y : zs)
+diffs [_] = []
+diffs [] = error "diffs: empty list"
+
+diffss :: [Int] -> [[Int]]
+diffss = go . singleton
+  where
+    go (xs : xss)
+      | all (== 0) xs = xs : xss
+      | otherwise = go $ diffs xs : xs : xss
+    go [] = error "diffss: empty list"
+
+next :: [Int] -> Int
+next = sum . map last . diffss
+
+pLine :: Parser [Int]
+pLine = signed decimal `sepBy1'` char ' '
+
+pInput :: Parser [[Int]]
+pInput = pLine `sepBy1'` endOfLine <* endOfLine <* endOfInput
+
+prev :: [Int] -> Int
+prev = res . map head . reverse . diffss
+  where
+    res = sum . zipWith weigh [0 ..]
+    weigh :: Int -> Int -> Int
+    weigh n x
+      | even n = x
+      | otherwise = -x
+
 main :: IO ()
-main = undefined
+main = do
+  d <- parseChallengeT (Full 9) pInput
+  print $ sum $ map next d
+  print $ sum $ map prev d
