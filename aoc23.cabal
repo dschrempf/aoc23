@@ -71,6 +71,7 @@ library
     Aoc.Occurrence
     Aoc.Parse
     Aoc.Prime
+    Aoc.Set
     Aoc.String
 
   hs-source-dirs:  src
