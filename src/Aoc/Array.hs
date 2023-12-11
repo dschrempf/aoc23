@@ -129,21 +129,21 @@ filterA f = A.ifoldlS accF []
       | otherwise = ixs
 
 insertRows ::
-  (Source r e) =>
+  (Manifest r e) =>
   Array r Ix2 e ->
   Ix1 ->
   Array r Ix2 e ->
-  Array DL Ix2 e
-insertRows rows at ar = A.concat' 2 [top, A.delay rows, bottom]
+  Array r Ix2 e
+insertRows rows at ar = A.compute $ A.concat' 2 [top, A.delay rows, bottom]
   where
     (top, bottom) = A.splitAt' 2 at ar
 
 insertCols ::
-  (Source r e) =>
+  (Manifest r e) =>
   Array r Ix2 e ->
   Ix1 ->
   Array r Ix2 e ->
-  Array DL Ix2 e
-insertCols cols at ar = A.concat' 1 [left, A.delay cols, right]
+  Array r Ix2 e
+insertCols cols at ar = A.compute $ A.concat' 1 [left, A.delay cols, right]
   where
     (left, right) = A.splitAt' 1 at ar

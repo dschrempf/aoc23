@@ -17,14 +17,18 @@ module Main
 where
 
 import Aoc (Challenge (..), parseChallengeT)
-import Aoc.Array (filterA)
+import Aoc.Array (filterA, insertCols, insertRows)
 import Control.Applicative (Alternative (..))
 import Data.Attoparsec.Text (Parser, char, choice, endOfInput, endOfLine, sepBy1')
 import Data.Massiv.Array (Array, B, Comp (..), Ix2 (..), Sz (..), (!>), (<!))
 import qualified Data.Massiv.Array as A
 
 data Pixel = EmptySpace | Galaxy
-  deriving (Show, Eq)
+  deriving (Eq)
+
+instance Show Pixel where
+  show EmptySpace = "."
+  show Galaxy = "#"
 
 pPixel :: Parser Pixel
 pPixel = choice [e, g]
@@ -60,14 +64,32 @@ findEmptyCols xs =
     (Sz (_ :. nCols)) = A.size xs
 
 addEmptyRows :: Image -> [Int] -> Image
-addEmptyRows = undefined
+addEmptyRows xs = go 0 xs
+  where
+    go :: Int -> Image -> [Int] -> Image
+    go _ image [] = image
+    go offset image (n : ns) =
+      let image' = insertRows emptyRow (n + offset) image
+       in go (succ offset) image' ns
+    (Sz (_ :. nCols)) = A.size xs
+    emptyRow = A.replicate Seq (Sz $ 1 :. nCols) EmptySpace
 
 addEmptyCols :: Image -> [Int] -> Image
-addEmptyCols = undefined
+addEmptyCols xs = go 0 xs
+  where
+    go :: Int -> Image -> [Int] -> Image
+    go _ image [] = image
+    go offset image (n : ns) =
+      let image' = insertCols emptyCol (n + offset) image
+       in go (succ offset) image' ns
+    (Sz (nRows :. _)) = A.size xs
+    emptyCol = A.replicate Seq (Sz $ nRows :. 1) EmptySpace
 
 main :: IO ()
 main = do
   im <- parseChallengeT (Sample 11 1) pImage
   print im
-  print $ findEmptyRows im
-  print $ findEmptyCols im
+  let emptyRows = findEmptyRows im
+      emptyCols = findEmptyCols im
+      im' = (`addEmptyCols` emptyCols) $ addEmptyRows im emptyRows
+  print im'
