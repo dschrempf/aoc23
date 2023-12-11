@@ -20,6 +20,7 @@ import Aoc (Challenge (..), parseChallengeT)
 import Aoc.Array (filterA, insertCols, insertRows)
 import Control.Applicative (Alternative (..))
 import Data.Attoparsec.Text (Parser, char, choice, endOfInput, endOfLine, sepBy1')
+import Data.List (sort)
 import Data.Massiv.Array (Array, B, Comp (..), Ix2 (..), Sz (..), (!>), (<!))
 import qualified Data.Massiv.Array as A
 
@@ -88,8 +89,18 @@ addEmptyCols xs = go 0 xs
 findGalaxies :: Image -> [Ix2]
 findGalaxies = filterA (== Galaxy)
 
-distance :: Ix2 -> Ix2 -> Int
-distance (mx :. nx) (my :. ny) = abs (my - mx) + abs (ny - nx)
+distance1 :: Ix2 -> Ix2 -> Int
+distance1 (mx :. nx) (my :. ny) = abs (my - mx) + abs (ny - nx)
+
+distance1D :: [Int] -> Int -> Int -> Int
+distance1D empties x1 x2 = right - left + 999999 * length nEmptiesBetween
+  where
+    [left, right] = sort [x1, x2]
+    nEmptiesBetween = filter (\e -> e > left && e < right) empties
+
+distance2 :: [Int] -> [Int] -> Ix2 -> Ix2 -> Int
+distance2 emptyRows emptyCols (mx :. nx) (my :. ny) =
+  distance1D emptyRows mx my + distance1D emptyCols nx ny
 
 main :: IO ()
 main = do
@@ -97,6 +108,9 @@ main = do
   let emptyRows = findEmptyRows im
       emptyCols = findEmptyCols im
       im' = (`addEmptyCols` emptyCols) $ addEmptyRows im emptyRows
-      gs = findGalaxies im'
-      ds = [distance a b | a <- gs, b <- gs, a /= b, a < b]
-  print $ length ds
+      gs1 = findGalaxies im'
+      ds1 = [distance1 a b | a <- gs1, b <- gs1, a /= b, a < b]
+  print $ sum ds1
+  let gs2 = findGalaxies im
+      ds2 = [distance2 emptyRows emptyCols a b | a <- gs2, b <- gs2, a /= b, a < b]
+  print $ sum ds2
