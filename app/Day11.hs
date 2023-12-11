@@ -85,11 +85,18 @@ addEmptyCols xs = go 0 xs
     (Sz (nRows :. _)) = A.size xs
     emptyCol = A.replicate Seq (Sz $ nRows :. 1) EmptySpace
 
+findGalaxies :: Image -> [Ix2]
+findGalaxies = filterA (== Galaxy)
+
+distance :: Ix2 -> Ix2 -> Int
+distance (mx :. nx) (my :. ny) = abs (my - mx) + abs (ny - nx)
+
 main :: IO ()
 main = do
-  im <- parseChallengeT (Sample 11 1) pImage
-  print im
+  im <- parseChallengeT (Full 11) pImage
   let emptyRows = findEmptyRows im
       emptyCols = findEmptyCols im
       im' = (`addEmptyCols` emptyCols) $ addEmptyRows im emptyRows
-  print im'
+      gs = findGalaxies im'
+      ds = [distance a b | a <- gs, b <- gs, a /= b, a < b]
+  print $ length ds
