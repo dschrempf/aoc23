@@ -17,9 +17,10 @@ module Main
 where
 
 import Aoc (Challenge (..), parseChallengeT)
+import Aoc.Array (filterA)
 import Control.Applicative (Alternative (..))
 import Data.Attoparsec.Text (Parser, char, choice, endOfInput, endOfLine, sepBy1')
-import Data.Massiv.Array (Array, B, Comp (..), Ix2)
+import Data.Massiv.Array (Array, B, Comp (..), Ix2 (..), Sz (..), (!>), (<!))
 import qualified Data.Massiv.Array as A
 
 data Pixel = EmptySpace | Galaxy
@@ -40,7 +41,33 @@ pImage =
     <* endOfLine
     <* endOfInput
 
+findEmptyRows :: Image -> [Int]
+findEmptyRows xs =
+  [ m
+    | m <- [0 .. pred nRows],
+      null $ filterA (== Galaxy) $ xs !> m
+  ]
+  where
+    (Sz (nRows :. _)) = A.size xs
+
+findEmptyCols :: Image -> [Int]
+findEmptyCols xs =
+  [ n
+    | n <- [0 .. pred nCols],
+      null $ filterA (== Galaxy) $ xs <! n
+  ]
+  where
+    (Sz (_ :. nCols)) = A.size xs
+
+addEmptyRows :: Image -> [Int] -> Image
+addEmptyRows = undefined
+
+addEmptyCols :: Image -> [Int] -> Image
+addEmptyCols = undefined
+
 main :: IO ()
 main = do
   im <- parseChallengeT (Sample 11 1) pImage
   print im
+  print $ findEmptyRows im
+  print $ findEmptyCols im
