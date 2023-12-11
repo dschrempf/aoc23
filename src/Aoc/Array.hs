@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 -- |
@@ -18,12 +19,17 @@ module Aoc.Array
     neighborsNoDiagonal3,
     breakA,
     filterA,
+    insertRows,
+    insertCols,
   )
 where
 
 import Data.Massiv.Array
   ( Array,
+    D,
+    DL,
     Index (isSafeIndex),
+    Ix1,
     Ix2 (..),
     Ix3,
     IxN (..),
@@ -32,10 +38,8 @@ import Data.Massiv.Array
     Source,
     Sz (Sz),
     Vector,
-    findIndex,
-    ifoldlS,
-    sliceAt,
   )
+import qualified Data.Massiv.Array as A
 import Prelude hiding (break)
 
 stencil :: Sz Ix2 -> Ix2 -> [Ix2]
@@ -112,14 +116,34 @@ neighborsNoDiagonal3 s p =
 
 -- | Like 'Data.List.break' but for arrays.
 breakA :: (Manifest r e) => (e -> Bool) -> Vector r e -> (Vector r e, Vector r e)
-breakA p xs = sliceAt i xs
+breakA p xs = A.sliceAt i xs
   where
-    i = maybe (size xs) Sz $ findIndex p xs
+    i = maybe (size xs) Sz $ A.findIndex p xs
 
 -- | Like 'Data.List.filter' but for arrays.
 filterA :: (Index ix, Source r e) => (e -> Bool) -> Array r ix e -> [ix]
-filterA f = ifoldlS accF []
+filterA f = A.ifoldlS accF []
   where
     accF ixs ix e
       | f e = ix : ixs
       | otherwise = ixs
+
+insertRows ::
+  (Source r e) =>
+  Array r Ix2 e ->
+  Ix1 ->
+  Array r Ix2 e ->
+  Array DL Ix2 e
+insertRows rows at ar = A.concat' 2 [top, A.delay rows, bottom]
+  where
+    (top, bottom) = A.splitAt' 2 at ar
+
+insertCols ::
+  (Source r e) =>
+  Array r Ix2 e ->
+  Ix1 ->
+  Array r Ix2 e ->
+  Array DL Ix2 e
+insertCols cols at ar = A.concat' 1 [left, A.delay cols, right]
+  where
+    (left, right) = A.splitAt' 1 at ar
