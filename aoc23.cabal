@@ -216,7 +216,7 @@ executable day12
   other-modules:
   autogen-modules:
   ghc-options:     -O2
-  build-depends:   async
+  build-depends:   memoize
 
 executable day13
   import:          common, exec
