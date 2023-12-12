@@ -16,5 +16,39 @@ module Main
   )
 where
 
+import Aoc
+import Aoc.Parse (skipHorizontalSpace)
+import Data.Attoparsec.Text (Parser, char, choice, decimal, endOfInput, endOfLine, sepBy1')
+
+data Spring = Operational | Damaged | Unknown
+  deriving (Eq)
+
+instance Show Spring where
+  show Operational = "."
+  show Damaged = "#"
+  show Unknown = "?"
+
+pSpring :: Parser Spring
+pSpring = choice [o, d, u]
+  where
+    o = Operational <$ char '.'
+    d = Damaged <$ char '#'
+    u = Unknown <$ char '?'
+
+type Groups = [Int]
+
+pGroups :: Parser Groups
+pGroups = decimal `sepBy1'` skipHorizontalSpace
+
+type Line = (Spring, Groups)
+
+pLine :: Parser Line
+pLine = (,) <$> pSpring <* skipHorizontalSpace <*> pGroups
+
+pInput :: Parser [Line]
+pInput = pLine `sepBy1'` endOfLine <* endOfLine <* endOfInput
+
 main :: IO ()
-main = undefined
+main = do
+  d <- parseChallengeT (Sample 12 2) pInput
+  print d

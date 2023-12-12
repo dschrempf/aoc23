@@ -16,10 +16,9 @@ module Main
   )
 where
 
-import Aoc (parseChallengeT)
+import Aoc
 import Aoc.Array (filterA, neighbors)
 import Aoc.Char (readDigit)
-import Aoc.Def (Challenge (..))
 import Control.Applicative (Alternative (..), optional, (<|>))
 import Data.Attoparsec.Text
   ( Parser,

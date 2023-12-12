@@ -18,7 +18,7 @@ module Main
   )
 where
 
-import Aoc (Challenge (..), parseChallengeT)
+import Aoc
 import Aoc.Array (filterA, neighborsNoDiagonal)
 import Aoc.Bounded (predWrap, succWrap)
 import Aoc.Direction (Direction, directionToIx2, ix2ToDirections)

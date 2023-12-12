@@ -152,7 +152,7 @@ executable day05
   hs-source-dirs:  app
   other-modules:
   autogen-modules:
-  ghc-options:     -O2 -fllvm
+  ghc-options:
   build-depends:
 
 executable day06

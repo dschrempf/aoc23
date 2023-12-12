@@ -16,12 +16,11 @@ module Main
   )
 where
 
-import Aoc (parseChallengeT)
-import Aoc.Def (Challenge (..))
+import Aoc
 import Aoc.Occurrence (count)
 import Control.Applicative (Alternative (..), (<|>))
 import Data.Attoparsec.Text (Parser, char, decimal, endOfInput, endOfLine, sepBy1', skipSpace)
-import Data.List (nub, sort, sortBy, sortOn)
+import Data.List (sort, sortBy, sortOn)
 import qualified Data.Map.Strict as M
 import Data.Ord (Down (..), comparing)
 

@@ -16,7 +16,7 @@ module Main
   )
 where
 
-import Aoc (Challenge (..), parseChallengeT)
+import Aoc
 import Aoc.Array (filterA, insertCols, insertRows)
 import Control.Applicative (Alternative (..))
 import Data.Attoparsec.Text (Parser, char, choice, endOfInput, endOfLine, sepBy1')

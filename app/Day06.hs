@@ -18,9 +18,16 @@ module Main
   )
 where
 
-import Aoc (parseChallengeT)
-import Aoc.Def (Challenge (..))
-import Data.Attoparsec.Text (Parser, decimal, endOfInput, endOfLine, sepBy1', skipSpace, string)
+import Aoc
+import Data.Attoparsec.Text
+  ( Parser,
+    decimal,
+    endOfInput,
+    endOfLine,
+    sepBy1',
+    skipSpace,
+    string,
+  )
 
 qu :: Int -> Int -> (Int, Int)
 qu tm' sm' = (floor $ 0.5 * tm - c + 1, ceiling $ 0.5 * tm + c - 1)

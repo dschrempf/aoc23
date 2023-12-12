@@ -18,7 +18,7 @@ module Main
   )
 where
 
-import Aoc (Challenge (..), parseChallengeT)
+import Aoc
 import Control.Applicative (asum)
 import Data.Attoparsec.Text
   ( Parser,

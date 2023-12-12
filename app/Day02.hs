@@ -18,7 +18,7 @@ module Main
   )
 where
 
-import Aoc (Challenge (..), parseChallengeT)
+import Aoc
 import Control.Applicative ((<|>))
 import Data.Attoparsec.Text (Parser, char, decimal, endOfInput, endOfLine, sepBy1', skipSpace, string)
 import Data.Foldable (Foldable (..))

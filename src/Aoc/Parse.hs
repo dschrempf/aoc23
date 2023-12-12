@@ -12,6 +12,7 @@
 module Aoc.Parse
   ( parseChallengeT,
     parseChallengeB,
+    skipHorizontalSpace,
   )
 where
 
@@ -37,3 +38,6 @@ parseChallengeT = parseChallengeWith T.readFile AT.parseOnly
 
 parseChallengeB :: Challenge -> AB.Parser a -> IO a
 parseChallengeB = parseChallengeWith B.readFile AB.parseOnly
+
+skipHorizontalSpace :: AT.Parser ()
+skipHorizontalSpace = AT.skipWhile AT.isHorizontalSpace
