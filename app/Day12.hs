@@ -18,6 +18,7 @@ where
 
 import Aoc
 import Aoc.Parse (skipHorizontalSpace)
+import Control.Applicative (Alternative (..))
 import Data.Attoparsec.Text (Parser, char, choice, decimal, endOfInput, endOfLine, sepBy1')
 
 data Spring = Operational | Damaged | Unknown
@@ -35,15 +36,17 @@ pSpring = choice [o, d, u]
     d = Damaged <$ char '#'
     u = Unknown <$ char '?'
 
+type Springs = [Spring]
+
 type Groups = [Int]
 
 pGroups :: Parser Groups
-pGroups = decimal `sepBy1'` skipHorizontalSpace
+pGroups = decimal `sepBy1'` char ','
 
-type Line = (Spring, Groups)
+type Line = (Springs, Groups)
 
 pLine :: Parser Line
-pLine = (,) <$> pSpring <* skipHorizontalSpace <*> pGroups
+pLine = (,) <$> some pSpring <* skipHorizontalSpace <*> pGroups
 
 pInput :: Parser [Line]
 pInput = pLine `sepBy1'` endOfLine <* endOfLine <* endOfInput
@@ -51,4 +54,4 @@ pInput = pLine `sepBy1'` endOfLine <* endOfLine <* endOfInput
 main :: IO ()
 main = do
   d <- parseChallengeT (Sample 12 2) pInput
-  print d
+  mapM_ print d
