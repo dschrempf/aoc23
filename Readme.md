@@ -25,4 +25,5 @@ I added automatic fetching of the full input as well as the samples (see
 -   **Day 2:** Writing the parser was a lot of fun!
 -   **Day 3:** A grid puzzle on day three &#x2014; that's a bit unexpected.
 -   **Day 6:** I loved this puzzle as it contained elements of physics.
+-   **Day 12:** Part 2 required memoization which is tedious in Haskell&#x2026;
 
