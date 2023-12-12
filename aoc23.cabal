@@ -215,8 +215,8 @@ executable day12
   hs-source-dirs:  app
   other-modules:
   autogen-modules:
-  ghc-options:
-  build-depends:
+  ghc-options:     -O2
+  build-depends:   async
 
 executable day13
   import:          common, exec
