@@ -16,5 +16,27 @@ module Main
   )
 where
 
+import Aoc (Challenge (..), parseChallengeT)
+import Aoc.Array (pMatrix)
+import Data.Attoparsec.Text (Parser, endOfInput, endOfLine, sepBy1', skipSpace)
+import Data.Massiv.Array (Array, B, Ix2)
+
+data Point = Ash | Rock
+  deriving (Eq)
+
+instance Show Point where
+  show Ash = "."
+  show Rock = "#"
+
+type Field = Array B Ix2 Point
+
+pField :: Parser Field
+pField = pMatrix [('.', Ash), ('#', Rock)]
+
+pInput :: Parser [Field]
+pInput = pField `sepBy1'` skipSpace <* endOfLine <* endOfInput
+
 main :: IO ()
-main = undefined
+main = do
+  f <- parseChallengeT (Sample 13 1) pInput
+  print f

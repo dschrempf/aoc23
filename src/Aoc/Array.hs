@@ -21,13 +21,16 @@ module Aoc.Array
     filterA,
     insertRows,
     insertCols,
+    pMatrix,
   )
 where
 
+import Control.Applicative (Alternative (..))
+import Data.Attoparsec.Text (Parser, char, choice, endOfLine, sepBy1')
 import Data.Massiv.Array
   ( Array,
-    D,
-    DL,
+    B,
+    Comp (..),
     Index (isSafeIndex),
     Ix1,
     Ix2 (..),
@@ -147,3 +150,8 @@ insertCols ::
 insertCols cols at ar = A.compute $ A.concat' 1 [left, A.delay cols, right]
   where
     (left, right) = A.splitAt' 1 at ar
+
+pMatrix :: [(Char, a)] -> Parser (Array B Ix2 a)
+pMatrix mp = A.fromLists' Seq <$> some el `sepBy1'` endOfLine
+  where
+    el = choice [category <$ char character | (character, category) <- mp]
