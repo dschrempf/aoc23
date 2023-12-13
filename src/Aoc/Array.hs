@@ -22,6 +22,8 @@ module Aoc.Array
     insertRows,
     insertCols,
     pMatrix,
+    nRows,
+    nCols,
   )
 where
 
@@ -155,3 +157,9 @@ pMatrix :: [(Char, a)] -> Parser (Array B Ix2 a)
 pMatrix mp = A.fromLists' Seq <$> some el `sepBy1'` endOfLine
   where
     el = choice [category <$ char character | (character, category) <- mp]
+
+nRows :: (Size r) => Array r Ix2 e -> Int
+nRows = fst . A.unconsDim . A.unSz . A.size
+
+nCols :: (Size r) => Array r Ix2 e -> Int
+nCols = snd . A.unsnocDim . A.unSz . A.size
