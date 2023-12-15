@@ -20,7 +20,6 @@ import Aoc
 import Aoc.Array (filterA, insertCols, insertRows)
 import Control.Applicative (Alternative (..))
 import Data.Attoparsec.Text (Parser, char, choice, endOfInput, endOfLine, sepBy1')
-import Data.List (sort)
 import Data.Massiv.Array (Array, B, Comp (..), Ix2 (..), Sz (..), (!>), (<!))
 import qualified Data.Massiv.Array as A
 
@@ -95,7 +94,7 @@ distance1 (mx :. nx) (my :. ny) = abs (my - mx) + abs (ny - nx)
 distance1D :: [Int] -> Int -> Int -> Int
 distance1D empties x1 x2 = right - left + 999999 * length nEmptiesBetween
   where
-    [left, right] = sort [x1, x2]
+    (left, right) = if x1 <= x2 then (x1, x2) else (x2, x1)
     nEmptiesBetween = filter (\e -> e > left && e < right) empties
 
 distance2 :: [Int] -> [Int] -> Ix2 -> Ix2 -> Int
