@@ -21,16 +21,20 @@ where
 import Aoc (Challenge (..), parseChallengeT)
 import Aoc.Array (filterA, nCols, nRows, pMatrix)
 import Data.Attoparsec.Text (Parser, endOfInput, endOfLine, sepBy1', skipSpace)
-import Data.Massiv.Array (Array, B, D, Dimension (..), Ix2 (..), Size, Source, Sz (..))
+import Data.List (singleton)
+import Data.Massiv.Array (Array, B, D, Dimension (..), Ix2 (..), Source, Sz (..))
 import qualified Data.Massiv.Array as A
 import Data.Maybe (catMaybes)
 
 data Point = Ash | Rock
   deriving (Eq)
 
+charMap :: Point -> Char
+charMap Ash = '.'
+charMap Rock = '#'
+
 instance Show Point where
-  show Ash = "."
-  show Rock = "#"
+  show = singleton . charMap
 
 type Field = Array B Ix2 Point
 
