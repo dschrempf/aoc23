@@ -163,3 +163,6 @@ nRows = fst . A.unconsDim . A.unSz . A.size
 
 nCols :: (Size r) => Array r Ix2 e -> Int
 nCols = snd . A.unsnocDim . A.unSz . A.size
+
+rotate :: Array r Ix2 e -> Array r Ix2 e
+rotate = A.reverse . A.transpose

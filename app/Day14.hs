@@ -21,19 +21,20 @@ where
 import Aoc (parseChallengeT)
 import Aoc.Array (pMatrix)
 import Aoc.Def
-import Control.Monad (when)
+import Aoc.Monad ((<.>))
+import Control.Monad (foldM_)
 import Control.Monad.ST (runST)
 import Data.Attoparsec.Text (Parser)
 import Data.List (singleton)
 import Data.Massiv.Array
   ( Array,
-    B,
+    B (..),
+    Dimension (..),
     Ix1,
     Ix2,
     MArray,
     Manifest,
     PrimMonad (..),
-    Sz (..),
   )
 import qualified Data.Massiv.Array as A
 
@@ -55,21 +56,49 @@ type Field = Array B Ix2 Position
 pField :: Parser Field
 pField = pMatrix [('O', Rolling), ('#', Fixed), ('.', Empty)]
 
-tilt :: Array B Ix1 Position -> Array B Ix1 Position
-tilt xs = runST $ do
-  xsM <- A.thawS xs
-  A.forM_ rng (pSwap xsM)
-  A.freezeS xsM
-  where
-    rng = A.imap const xs
+rollStonesToLastFixed ::
+  (Manifest r Position, PrimMonad m, A.MonadThrow m) =>
+  MArray (PrimState m) r Ix1 Position ->
+  Ix1 ->
+  Ix1 ->
+  m Ix1
+rollStonesToLastFixed xs lastFixed current
+  | lastFixed == current = pure current
+  | otherwise = do
+      x <- A.readM xs current
+      case x of
+        Rolling -> do
+          let lastFixed' = succ lastFixed
+          A.writeM xs current Empty
+          A.writeM xs lastFixed' Rolling
+          pure lastFixed'
+        Fixed -> pure current
+        Empty -> pure lastFixed
 
-pSwap :: (Manifest r Position, PrimMonad m, A.MonadThrow m) => MArray (PrimState m) r Ix1 Position -> Ix1 -> m ()
-pSwap ysM j = do
-  a <- A.readM ysM j
-  b <- A.readM ysM (succ j)
-  when (a == Empty && b == Rolling) $ A.swap_ ysM j (succ j)
+tilt1D :: (Manifest r Position) => Array r Ix1 Position -> Array r Ix1 Position
+tilt1D field = runST $ do
+  fieldM <- A.thawS field
+  foldM_ (rollStonesToLastFixed fieldM) (-1) rng
+  A.freezeS fieldM
+  where
+    rng = A.imap const field
+
+load1D :: Array B Ix1 Position -> Int
+load1D = A.sum . A.imap f . A.reverse Dim1
+  where
+    f i Rolling = succ i
+    f _ _ = 0
+
+-- tiltNorth :: (A.MonadThrow m) => Array B Ix2 Position -> m (Array B Ix2 Position)
+-- tiltNorth = A.compute <.> A.stackInnerSlicesM . A.map (tilt1D . A.computeAs A.B) . A.innerSlices
+
+-- tiltWest :: (A.MonadThrow m) => Array B Ix2 Position -> m (Array B Ix2 Position)
+-- tiltWest = A.compute <.> A.stackInnerSlicesM . A.map tilt1D . A.outerSlices
+
+tiltAndComputeLoad :: Array B Ix2 Position -> Int
+tiltAndComputeLoad = A.sum . A.map (load1D . tilt1D . A.computeAs B) . A.innerSlices
 
 main :: IO ()
 main = do
-  f <- parseChallengeT (Sample 14 1) pField
-  print f
+  f <- parseChallengeT (Full 14) pField
+  print $ tiltAndComputeLoad f
