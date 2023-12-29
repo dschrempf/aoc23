@@ -70,6 +70,7 @@ library
     Aoc.Function
     Aoc.List
     Aoc.Mod
+    Aoc.Monad
     Aoc.Occurrence
     Aoc.Parse
     Aoc.Prime
