@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 
 -- |
@@ -19,10 +20,13 @@ module Main
 where
 
 import Aoc (parseChallengeT)
-import Aoc.Array (pMatrix)
+import Aoc.Array (pMatrix, rotateLeft, rotateRight)
 import Aoc.Def
+import Aoc.Function (nTimesStrict)
+import Aoc.List (findCycle, findFirstDuplicate)
 import Aoc.Monad ((<.>))
-import Control.Monad (foldM_)
+import Control.DeepSeq (NFData)
+import Control.Monad (foldM_, (>=>))
 import Control.Monad.ST (runST)
 import Data.Attoparsec.Text (Parser)
 import Data.List (singleton)
@@ -37,11 +41,13 @@ import Data.Massiv.Array
     PrimMonad (..),
   )
 import qualified Data.Massiv.Array as A
-
--- import qualified Data.Massiv.Array as A
+import Data.Maybe (fromJust)
+import GHC.Generics
 
 data Position = Rolling | Fixed | Empty
-  deriving (Eq)
+  deriving (Eq, Ord, Generic)
+
+instance NFData Position
 
 charMap :: Position -> Char
 charMap Rolling = 'O'
@@ -89,16 +95,39 @@ load1D = A.sum . A.imap f . A.reverse Dim1
     f i Rolling = succ i
     f _ _ = 0
 
--- tiltNorth :: (A.MonadThrow m) => Array B Ix2 Position -> m (Array B Ix2 Position)
--- tiltNorth = A.compute <.> A.stackInnerSlicesM . A.map (tilt1D . A.computeAs A.B) . A.innerSlices
-
--- tiltWest :: (A.MonadThrow m) => Array B Ix2 Position -> m (Array B Ix2 Position)
--- tiltWest = A.compute <.> A.stackInnerSlicesM . A.map tilt1D . A.outerSlices
-
 tiltAndComputeLoad :: Array B Ix2 Position -> Int
 tiltAndComputeLoad = A.sum . A.map (load1D . tilt1D . A.computeAs B) . A.innerSlices
+
+tiltNorth,
+  tiltWest,
+  tiltSouth,
+  tiltEast ::
+    (A.MonadThrow m) =>
+    Array B Ix2 Position ->
+    m (Array B Ix2 Position)
+tiltWest = A.compute <.> A.stackOuterSlicesM . A.map tilt1D . A.outerSlices
+tiltNorth = rotateRight <.> tiltWest . rotateLeft
+tiltSouth = rotateLeft <.> tiltWest . rotateRight
+tiltEast = (A.compute . A.reverse Dim1) <.> tiltWest . A.compute . A.reverse Dim1
+
+cycleAoc' ::
+  (A.MonadThrow m) =>
+  Array B Ix2 Position ->
+  m (Array B Ix2 Position)
+cycleAoc' = tiltNorth >=> tiltWest >=> tiltSouth >=> tiltEast
+
+cycleAoc :: Array B Ix2 Position -> Array B Ix2 Position
+cycleAoc = fromJust . cycleAoc'
+
+computeLoad :: Array B Ix2 Position -> Int
+computeLoad = A.sum . A.map (load1D . A.computeAs B) . A.innerSlices
 
 main :: IO ()
 main = do
   f <- parseChallengeT (Full 14) pField
   print $ tiltAndComputeLoad f
+  let fields = iterate cycleAoc f
+  let cycleStart = fromJust $ findFirstDuplicate fields
+  let (cycleLength, _) = fromJust $ findCycle 100 2 $ drop cycleStart fields
+  let modulo = (1000000000 - cycleStart) `mod` cycleLength
+  print $ computeLoad $ nTimesStrict (cycleStart + modulo) cycleAoc f

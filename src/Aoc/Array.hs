@@ -24,6 +24,8 @@ module Aoc.Array
     pMatrix,
     nRows,
     nCols,
+    rotateLeft,
+    rotateRight,
   )
 where
 
@@ -33,6 +35,7 @@ import Data.Massiv.Array
   ( Array,
     B,
     Comp (..),
+    Dimension (..),
     Index (isSafeIndex),
     Ix1,
     Ix2 (..),
@@ -164,5 +167,8 @@ nRows = fst . A.unconsDim . A.unSz . A.size
 nCols :: (Size r) => Array r Ix2 e -> Int
 nCols = snd . A.unsnocDim . A.unSz . A.size
 
-rotate :: Array r Ix2 e -> Array r Ix2 e
-rotate = A.reverse . A.transpose
+rotateLeft :: (Manifest r e) => Array r Ix2 e -> Array r Ix2 e
+rotateLeft = A.compute . A.reverse Dim2 . A.transpose
+
+rotateRight :: (Manifest r e) => Array r Ix2 e -> Array r Ix2 e
+rotateRight = A.compute . A.transpose . A.reverse Dim2

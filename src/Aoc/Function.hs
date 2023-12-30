@@ -12,6 +12,8 @@
 module Aoc.Function
   ( nTimesStrict,
     nTimesLazy,
+    nTimesStrictM,
+    nTimesLazyM,
   )
 where
 
@@ -30,3 +32,19 @@ nTimesLazy n f x = case compare n 1 of
   LT -> error $ "nTimesLazy: n zero or negative: " ++ show n
   EQ -> f x
   GT -> nTimesLazy (n - 1) f $ f x
+
+-- | Apply a monadic function @n@ times.
+nTimesStrictM :: (NFData a, Monad m) => Int -> (a -> m a) -> a -> m a
+nTimesStrictM n f x = case compare n 1 of
+  LT -> error $ "nTimesStrict: n zero or negative: " ++ show n
+  EQ -> force <$> f x
+  GT -> do
+    f' <- force <$> f x
+    nTimesStrictM (n - 1) f f'
+
+-- | Apply a function @n@ times.
+nTimesLazyM :: (Monad m) => Int -> (a -> m a) -> a -> m a
+nTimesLazyM n f x = case compare n 1 of
+  LT -> error $ "nTimesLazy: n zero or negative: " ++ show n
+  EQ -> f x
+  GT -> f x >>= nTimesLazyM (n - 1) f
