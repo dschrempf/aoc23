@@ -16,5 +16,33 @@ module Main
   )
 where
 
+import Aoc
+import Aoc.Array (pMatrix)
+import Data.Attoparsec.Text (Parser)
+import Data.Massiv.Array (Array, B (..), Ix2 (..))
+
+data Tile = Empty | MirrorSlash | MirrorBackSlash | SplitterV | SplitterH
+
+instance Show Tile where
+  show Empty = "."
+  show MirrorSlash = "/"
+  show MirrorBackSlash = "\\"
+  show SplitterV = "|"
+  show SplitterH = "-"
+
+type Contraption = Array B Ix2 Tile
+
+pContraption :: Parser Contraption
+pContraption =
+  pMatrix
+    [ ('.', Empty),
+      ('/', MirrorSlash),
+      ('\\', MirrorBackSlash),
+      ('|', SplitterV),
+      ('-', SplitterH)
+    ]
+
 main :: IO ()
-main = undefined
+main = do
+  d <- parseChallengeT (Sample 16 1) pContraption
+  print d
