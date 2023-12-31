@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 -- |
 -- Module      :  Main
 -- Description :  Day 15
@@ -16,5 +18,22 @@ module Main
   )
 where
 
+import Aoc
+import Data.Attoparsec.Text (Parser, char, sepBy1', takeWhile1)
+import Data.Char (ord)
+import qualified Data.Text as T
+
+pInput :: Parser [Text]
+pInput = takeWhile1 (`notElem` [',', '\n']) `sepBy1'` char ','
+
+hashChar :: Int -> Char -> Int
+hashChar n c = (n + ord c) * 17 `mod` 256
+
+hash :: Text -> Int
+hash = T.foldl hashChar 0
+
 main :: IO ()
-main = undefined
+main = do
+  d <- parseChallengeT (Full 15) pInput
+  print d
+  print $ sum $ map hash d
