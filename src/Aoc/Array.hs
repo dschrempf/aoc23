@@ -33,7 +33,6 @@ import Control.Applicative (Alternative (..))
 import Data.Attoparsec.Text (Parser, char, choice, endOfLine, sepBy1')
 import Data.Massiv.Array
   ( Array,
-    B,
     Comp (..),
     Dimension (..),
     Index (isSafeIndex),
@@ -156,7 +155,7 @@ insertCols cols at ar = A.compute $ A.concat' 1 [left, A.delay cols, right]
   where
     (left, right) = A.splitAt' 1 at ar
 
-pMatrix :: [(Char, a)] -> Parser (Array B Ix2 a)
+pMatrix :: (Manifest r a) => [(Char, a)] -> Parser (Array r Ix2 a)
 pMatrix mp = A.fromLists' Seq <$> some el `sepBy1'` endOfLine
   where
     el = choice [category <$ char character | (character, category) <- mp]
