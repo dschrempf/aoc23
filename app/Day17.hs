@@ -55,7 +55,7 @@ type OptimalPaths = Map (Ix2, Direction, Natural) Natural
 
 moveStraightRay :: Field -> Ray -> Maybe Ray
 moveStraightRay xs (Ray ix dir nStr hL)
-  | nStr >= 3 = Nothing
+  | nStr >= 10 = Nothing
   | otherwise = do
       dHL <- xs A.!? ix'
       pure $ Ray ix' dir (succ nStr) (hL + dHL)
@@ -72,10 +72,11 @@ moveOneStepS :: Field -> Ray -> [Ray]
 moveOneStepS xs ray =
   mapMaybe
     (moveStraightRay xs)
-    [ ray,
-      turnRightRay ray,
-      turnLeftRay ray
-    ]
+    $ catMaybes
+      [ Just ray,
+        if nStraight ray < 4 then Nothing else Just $ turnRightRay ray,
+        if nStraight ray < 4 then Nothing else Just $ turnLeftRay ray
+      ]
 
 filterRaysAndUpdateOptimalPaths :: [Ray] -> OptimalPaths -> ([Ray], OptimalPaths)
 filterRaysAndUpdateOptimalPaths rs ps = foldl accF ([], ps) rs
@@ -120,5 +121,5 @@ main = do
       catMaybes
         [ M.lookup (pred m :. pred n, d, l) ps
           | d <- [minBound .. maxBound :: Direction],
-            l <- [0 .. 3 :: Natural]
+            l <- [4 .. 10 :: Natural]
         ]
