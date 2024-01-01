@@ -20,8 +20,9 @@ import Aoc
 import Aoc.Array (pMatrix)
 import Aoc.Direction
 import Data.Attoparsec.Text (Parser)
-import Data.Foldable (Foldable (..))
-import Data.Massiv.Array (Array, B (..), Ix2 (..))
+import Data.Foldable (Foldable (..), maximumBy)
+import Data.Function (on)
+import Data.Massiv.Array (Array, B (..), Ix2 (..), Sz (..))
 import qualified Data.Massiv.Array as A
 import Data.Set (Set)
 import qualified Data.Set as S
@@ -94,19 +95,30 @@ next xs rays visited = (uniqueNewRays, visited `S.union` uniqueNewRays)
     newRays = fold $ S.map (traceOneStep xs) rays
     uniqueNewRays = newRays S.\\ visited
 
-trace :: Contraption -> VisitedTiles
-trace xs = go firstRay firstRay xs
+traceWith :: Ray -> Contraption -> VisitedTiles
+traceWith ray xs = go firstRay firstRay xs
   where
-    firstRay = traceOneStep xs $ Ray (0 :. -1) East
+    firstRay = traceOneStep xs ray
     go rays visited ys
       | visited == newVisited = visited
       | otherwise = go newRays newVisited ys
       where
         (newRays, newVisited) = next ys rays visited
 
+nTilesWith :: Ray -> Contraption -> Int
+nTilesWith ray = length . S.map position . traceWith ray
+
+startingRays :: Contraption -> [Ray]
+startingRays xs =
+  [Ray (-1 :. n) South | n <- [0 .. pred nMax]]
+    ++ [Ray (mMax :. n) North | n <- [0 .. pred nMax]]
+    ++ [Ray (m :. -1) East | m <- [0 .. pred mMax]]
+    ++ [Ray (m :. nMax) West | m <- [0 .. pred mMax]]
+  where
+    (Sz (mMax :. nMax)) = A.size xs
+
 main :: IO ()
 main = do
   d <- parseChallengeT (Full 16) pContraption
-  let rays = trace d
-  print rays
-  print $ length $ S.map position rays
+  print $ nTilesWith (Ray (0 :. -1) East) d
+  print $ maximumBy (compare `on` fst) [(nTilesWith ray d, ray) | ray <- startingRays d]
