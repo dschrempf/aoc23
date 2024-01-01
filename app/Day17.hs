@@ -20,15 +20,11 @@ import Aoc
 import Aoc.Array (pMatrix)
 import Aoc.Direction (Direction (..), moveNStepsInDirection, turnLeft, turnRight)
 import Data.Attoparsec.Text (Parser)
-import Data.List (sort)
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.Massiv.Array (Array, B, Ix2 (..))
+import Data.Massiv.Array (Array, B, Ix2 (..), Sz (..))
 import qualified Data.Massiv.Array as A
-import Data.Maybe (mapMaybe)
-import Data.PartialOrd (PartialOrd)
-import qualified Data.PartialOrd as P
-import Debug.Trace
+import Data.Maybe (catMaybes, mapMaybe)
 import Numeric.Natural (Natural)
 
 type Field = Array B Ix2 Natural
@@ -55,43 +51,16 @@ data Ray = Ray
   }
   deriving (Show, Eq, Ord)
 
-instance PartialOrd Ray where
-  x <= y =
-    (position x == position y)
-      && (direction x == direction y)
-      && if nStraight x == nStraight y
-        then heatLoss x <= heatLoss y
-        else nStraight x <= nStraight y && heatLoss x <= heatLoss y
-
-instance PartialOrd RayPath where
-  rayPathX <= rayPathY =
-    let x = rayHead rayPathX
-        yH = rayHead rayPathY
-     in x P.<= yH || case M.lookup (position x) (rayPath rayPathY) of
-          Nothing -> False
-          Just y -> x P.<= y
-
-data RayPath = RayPath
-  { rayHead :: Ray,
-    rayPath :: Map Ix2 Ray,
-    endOfLine :: Bool
-  }
-  deriving (Show, Eq, Ord)
+type OptimalPaths = Map (Ix2, Direction, Natural) Natural
 
 moveStraightRay :: Field -> Ray -> Maybe Ray
-moveStraightRay xs (Ray ix dir nStr hL) = do
-  dHL <- xs A.!? ix'
-  pure $ Ray ix' dir (succ nStr) (hL + dHL)
+moveStraightRay xs (Ray ix dir nStr hL)
+  | nStr >= 3 = Nothing
+  | otherwise = do
+      dHL <- xs A.!? ix'
+      pure $ Ray ix' dir (succ nStr) (hL + dHL)
   where
     ix' = moveNStepsInDirection 1 ix dir
-
-moveStraightRayPath :: Field -> RayPath -> Maybe RayPath
-moveStraightRayPath xs (RayPath rHead rPath eol) = case moveStraightRay xs rHead of
-  Nothing -> Just $ RayPath rHead rPath True
-  Just rHead' ->
-    if nStraight rHead' > 3
-      then Nothing
-      else Just $ RayPath rHead' (M.insert (position rHead') rHead' rPath) eol
 
 turnRightRay :: Ray -> Ray
 turnRightRay (Ray ix dir _ hL) = Ray ix (turnRight dir) 0 hL
@@ -99,37 +68,57 @@ turnRightRay (Ray ix dir _ hL) = Ray ix (turnRight dir) 0 hL
 turnLeftRay :: Ray -> Ray
 turnLeftRay (Ray ix dir _ hL) = Ray ix (turnLeft dir) 0 hL
 
-moveOneStepS :: Field -> RayPath -> [RayPath]
-moveOneStepS xs rp@(RayPath rHead rTail eol)
-  | eol = [rp]
-  | otherwise =
-      mapMaybe
-        (moveStraightRayPath xs)
-        [ RayPath rHead rTail eol,
-          RayPath (turnRightRay rHead) rTail eol,
-          RayPath (turnLeftRay rHead) rTail eol
-        ]
+moveOneStepS :: Field -> Ray -> [Ray]
+moveOneStepS xs ray =
+  mapMaybe
+    (moveStraightRay xs)
+    [ ray,
+      turnRightRay ray,
+      turnLeftRay ray
+    ]
 
-moveOneStep :: Field -> [RayPath] -> [RayPath]
-moveOneStep xs rs = P.minima $ concatMap (moveOneStepS xs) rs
+filterRaysAndUpdateOptimalPaths :: [Ray] -> OptimalPaths -> ([Ray], OptimalPaths)
+filterRaysAndUpdateOptimalPaths rs ps = foldl accF ([], ps) rs
+  where
+    accF (goodRays, optimalPaths) ray@(Ray ix dir nStr hL) =
+      case optimalPaths M.!? (ix, dir, nStr) of
+        Just optHL | optHL <= hL -> (goodRays, optimalPaths)
+        _ -> (ray : goodRays, M.insert (ix, dir, nStr) hL optimalPaths)
 
-firstRayPaths :: [RayPath]
-firstRayPaths =
-  [ RayPath rayE (M.singleton (0 :. 0) rayE) False,
-    RayPath rayS (M.singleton (0 :. 0) rayS) False
-  ]
+moveOneStep :: Field -> [Ray] -> OptimalPaths -> ([Ray], OptimalPaths)
+moveOneStep xs rs = filterRaysAndUpdateOptimalPaths rs'
+  where
+    rs' = concatMap (moveOneStepS xs) rs
+
+initialRays :: [Ray]
+initialRays = [rayE, rayS]
   where
     rayE = Ray (0 :. 0) East 0 0
     rayS = Ray (0 :. 0) South 0 0
 
-moveUntilFixpoint :: Field -> [RayPath] -> [RayPath]
-moveUntilFixpoint xs rs
-  | rs == rs' = rs
-  | otherwise = moveUntilFixpoint xs (traceShow (length $ filter (not . endOfLine) rs') rs')
+initialOptimalPaths :: OptimalPaths
+initialOptimalPaths =
+  M.fromList
+    [ ((0 :. 0, East, 0), 0),
+      ((0 :. 0, South, 0), 0)
+    ]
+
+moveUntilFixpoint :: Field -> [Ray] -> OptimalPaths -> OptimalPaths
+moveUntilFixpoint xs rs ps
+  | null rs' = ps'
+  | otherwise = moveUntilFixpoint xs rs' ps'
   where
-    rs' = sort $ moveOneStep xs rs
+    (rs', ps') = moveOneStep xs rs ps
 
 main :: IO ()
 main = do
-  xs <- parseChallengeT (Sample 17 1) pInput
-  print $ moveUntilFixpoint xs firstRayPaths
+  xs <- parseChallengeT (Full 17) pInput
+  let ps = moveUntilFixpoint xs initialRays initialOptimalPaths
+      (Sz (m :. n)) = A.size xs
+  print $
+    minimum $
+      catMaybes
+        [ M.lookup (pred m :. pred n, d, l) ps
+          | d <- [minBound .. maxBound :: Direction],
+            l <- [0 .. 3 :: Natural]
+        ]
