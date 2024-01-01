@@ -13,14 +13,20 @@ module Aoc.Direction
   ( Direction (..),
     ix2ToDirections,
     directionToIx2,
+    moveNStepsInDirection,
+    isVertical,
+    isHorizontal,
+    turnRight,
+    turnLeft,
   )
 where
 
+import Aoc.Bounded (predWrap, succWrap)
 import Data.Massiv.Array (Ix2 (..))
 import Data.Maybe (catMaybes)
 
 data Direction = North | East | South | West
-  deriving (Show, Eq, Bounded, Enum)
+  deriving (Show, Eq, Ord, Bounded, Enum)
 
 toDirectionNS :: Int -> Maybe Direction
 toDirectionNS x = case compare x 0 of
@@ -44,3 +50,22 @@ directionToIx2 North = -1 :. 0
 directionToIx2 East = 0 :. 1
 directionToIx2 South = 1 :. 0
 directionToIx2 West = 0 :. -1
+
+moveNStepsInDirection :: Int -> Ix2 -> Direction -> Ix2
+moveNStepsInDirection nSteps pos dir = pos + (nSteps * m :. nSteps * n)
+  where
+    (m :. n) = directionToIx2 dir
+
+isVertical :: Direction -> Bool
+isVertical North = True
+isVertical South = True
+isVertical _ = False
+
+isHorizontal :: Direction -> Bool
+isHorizontal = not . isVertical
+
+turnRight :: Direction -> Direction
+turnRight = succWrap
+
+turnLeft :: Direction -> Direction
+turnLeft = predWrap
