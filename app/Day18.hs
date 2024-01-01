@@ -29,9 +29,9 @@ import Data.Attoparsec.Text
     decimal,
     endOfInput,
     endOfLine,
-    hexadecimal,
+    isEndOfLine,
     sepBy1',
-    string,
+    skipWhile,
   )
 import Data.Bifunctor (Bifunctor (..))
 import Data.List (nub)
@@ -39,12 +39,9 @@ import Data.Massiv.Array (Ix2 (..), Sz (..))
 import qualified Data.Massiv.Array as A
 import Data.Set (Set)
 import qualified Data.Set as S
-import Data.Word (Word8)
 import GHC.Natural (Natural)
 
-type RGB = (Word8, Word8, Word8)
-
-data Instruction = Instruction {direction :: Direction, edgeLength :: Natural, rgb :: RGB}
+data Instruction = Instruction {direction :: Direction, edgeLength :: Natural}
   deriving (Eq, Show)
 
 pDirection :: Parser Direction
@@ -56,35 +53,36 @@ pDirection =
       West <$ char 'L'
     ]
 
-pColor :: Parser RGB
-pColor = do
-  _ <- string "(#"
-  c <- hexadecimal :: Parser Int
-  _ <- char ')'
-  let b = c `mod` 256
-      g = ((c - b) `quot` 256) `mod` 256
-      r = ((c - b) `quot` (256 * 256)) `mod` 256
-  pure (fromIntegral r, fromIntegral g, fromIntegral b)
+-- pColor :: Parser RGB
+-- pColor = do
+--   _ <- string "(#"
+--   c <- hexadecimal :: Parser Int
+--   _ <- char ')'
+--   let b = c `mod` 256
+--       g = ((c - b) `quot` 256) `mod` 256
+--       r = ((c - b) `quot` (256 * 256)) `mod` 256
+--   pure (fromIntegral r, fromIntegral g, fromIntegral b)
 
-pInstruction :: Parser Instruction
-pInstruction = do
+pInstruction1 :: Parser Instruction
+pInstruction1 = do
   d <- pDirection
   _ <- skipHorizontalSpace
   l <- decimal
   _ <- skipHorizontalSpace
-  Instruction d l <$> pColor
+  _ <- skipWhile (not . isEndOfLine)
+  pure $ Instruction d l
 
 pDigPlan :: Parser [Instruction]
-pDigPlan = pInstruction `sepBy1'` endOfLine <* endOfLine <* endOfInput
+pDigPlan = pInstruction1 `sepBy1'` endOfLine <* endOfLine <* endOfInput
 
-type Trench = [(Ix2, RGB)]
+type Trench = [Ix2]
 
 excavate :: [Instruction] -> Trench
 excavate = snd . foldl accF (0 :. 0, [])
   where
-    accF (pos, trench) (Instruction dir len col) =
+    accF (pos, trench) (Instruction dir len) =
       let poss = getPositions pos dir len
-          trench' = trench ++ [(p, col) | p <- getPositions pos dir len]
+          trench' = trench ++ poss
        in (last poss, trench')
     getPositions pos dir len =
       [ moveNStepsInDirection (fromIntegral n) pos dir
@@ -94,9 +92,8 @@ excavate = snd . foldl accF (0 :. 0, [])
 getDimensions :: Trench -> (Ix2, Ix2)
 getDimensions xs = (topLeft, bottomRight)
   where
-    ks = map fst xs
-    ms = map (fst . A.fromIx2) ks
-    ns = map (snd . A.fromIx2) ks
+    ms = map (fst . A.fromIx2) xs
+    ns = map (snd . A.fromIx2) xs
     topLeft = minimum ms :. minimum ns
     bottomRight = maximum ms :. maximum ns
 
@@ -136,21 +133,25 @@ atBorder (Sz (rows :. cols)) (m :. n) = m == 0 || n == 0 || m == pred rows || n 
 isOutside :: Sz Ix2 -> [Ix2] -> Bool
 isOutside sz = any (atBorder sz)
 
-main :: IO ()
-main = do
-  is <- parseChallengeT (Full 18) pDigPlan
-  let trenchShifted = excavate is
-      (topLeftShifted, _) = getDimensions trenchShifted
-      trench = map (\(k, c) -> (k - topLeftShifted, c)) trenchShifted
+getSize :: Trench -> Int
+getSize trenchShifted =
+  let (topLeftShifted, _) = getDimensions trenchShifted
+      trench = map (\k -> k - topLeftShifted) trenchShifted
       (_, bottomRight) = getDimensions trench
       trenchSize = Sz $ bottomRight + (1 :. 1)
-      trenchPath = map fst trench
-      trenchPathLoop = last trenchPath : trenchPath
+      trenchPathLoop = last trench : trench
       trenchPathLoopWithDirection = getLoopWithDirections trenchPathLoop
       (leftTiles, rightTiles) =
         bimap nub nub $
           getRightAndLeftTiles trenchSize (S.fromList trenchPathLoop) trenchPathLoopWithDirection
-  print $ (+ length trench) $ length $ case (isOutside trenchSize leftTiles, isOutside trenchSize rightTiles) of
-    (True, False) -> rightTiles
-    (False, True) -> leftTiles
-    _ -> error "could not determine inside"
+      inside = length $ case (isOutside trenchSize leftTiles, isOutside trenchSize rightTiles) of
+        (True, False) -> rightTiles
+        (False, True) -> leftTiles
+        _ -> error "could not determine inside"
+   in inside + length trench
+
+main :: IO ()
+main = do
+  is <- parseChallengeT (Full 18) pDigPlan
+  let trenchShifted = excavate is
+  print $ getSize trenchShifted
