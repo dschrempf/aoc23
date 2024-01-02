@@ -20,21 +20,26 @@ where
 
 import Aoc
 import Aoc.Bounded (predWrap, succWrap)
-import Aoc.Direction (Direction (..), directionToIx2, ix2ToDirections, moveNStepsInDirection)
+import Aoc.Direction (Direction (..), directionToIx2, isHorizontal, ix2ToDirections, moveNStepsInDirection)
 import Aoc.Parse (skipHorizontalSpace)
 import Data.Attoparsec.Text
   ( Parser,
+    anyChar,
     char,
     choice,
+    count,
     decimal,
     endOfInput,
     endOfLine,
     isEndOfLine,
+    satisfy,
     sepBy1',
     skipWhile,
+    string,
   )
 import Data.Bifunctor (Bifunctor (..))
-import Data.List (nub)
+import Data.Char (isHexDigit)
+import Data.List (foldl1', nub)
 import Data.Massiv.Array (Ix2 (..), Sz (..))
 import qualified Data.Massiv.Array as A
 import Data.Set (Set)
@@ -44,8 +49,8 @@ import GHC.Natural (Natural)
 data Instruction = Instruction {direction :: Direction, edgeLength :: Natural}
   deriving (Eq, Show)
 
-pDirection :: Parser Direction
-pDirection =
+pDirectionChar :: Parser Direction
+pDirectionChar =
   choice
     [ North <$ char 'U',
       East <$ char 'R',
@@ -53,19 +58,9 @@ pDirection =
       West <$ char 'L'
     ]
 
--- pColor :: Parser RGB
--- pColor = do
---   _ <- string "(#"
---   c <- hexadecimal :: Parser Int
---   _ <- char ')'
---   let b = c `mod` 256
---       g = ((c - b) `quot` 256) `mod` 256
---       r = ((c - b) `quot` (256 * 256)) `mod` 256
---   pure (fromIntegral r, fromIntegral g, fromIntegral b)
-
-pInstruction1 :: Parser Instruction
-pInstruction1 = do
-  d <- pDirection
+pInstruction :: Parser Instruction
+pInstruction = do
+  d <- pDirectionChar
   _ <- skipHorizontalSpace
   l <- decimal
   _ <- skipHorizontalSpace
@@ -73,7 +68,7 @@ pInstruction1 = do
   pure $ Instruction d l
 
 pDigPlan :: Parser [Instruction]
-pDigPlan = pInstruction1 `sepBy1'` endOfLine <* endOfLine <* endOfInput
+pDigPlan = pInstruction `sepBy1'` endOfLine <* endOfLine <* endOfInput
 
 type Trench = [Ix2]
 
@@ -150,8 +145,36 @@ getSize trenchShifted =
         _ -> error "could not determine inside"
    in inside + length trench
 
+pDirectionInt :: Parser Direction
+pDirectionInt =
+  choice
+    [ North <$ char '3',
+      East <$ char '0',
+      South <$ char '1',
+      West <$ char '2'
+    ]
+
+pColorInstruction :: Parser Instruction
+pColorInstruction = do
+  _ <- anyChar
+  _ <- skipHorizontalSpace
+  _ <- decimal :: Parser Int
+  _ <- skipHorizontalSpace
+  _ <- string "(#"
+  lS <- count 5 (satisfy isHexDigit)
+  d <- pDirectionInt
+  _ <- char ')'
+  let l = read $ "0x" <> lS
+  pure $ Instruction d l
+
+pDigPlanColor :: Parser [Instruction]
+pDigPlanColor = pColorInstruction `sepBy1'` endOfLine <* endOfLine <* endOfInput
+
 main :: IO ()
 main = do
-  is <- parseChallengeT (Full 18) pDigPlan
-  let trenchShifted = excavate is
+  is1 <- parseChallengeT (Sample 18 1) pDigPlan
+  let trenchShifted = excavate is1
   print $ getSize trenchShifted
+  is2 <- parseChallengeT (Full 18) pDigPlanColor
+  let horLs = map edgeLength $ filter (isHorizontal . direction) is2
+  print horLs
