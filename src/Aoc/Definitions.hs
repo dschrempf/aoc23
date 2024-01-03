@@ -1,5 +1,5 @@
 -- |
--- Module      :  Aoc.Def
+-- Module      :  Aoc.Definitions
 -- Description :  Definitions
 -- Copyright   :  2023 Dominik Schrempf
 -- License     :  GPL-3.0-or-later
@@ -9,7 +9,7 @@
 -- Portability :  portable
 --
 -- Creation date: Thu Nov  9 09:58:58 2023.
-module Aoc.Def
+module Aoc.Definitions
   ( Year,
     year,
     Day,

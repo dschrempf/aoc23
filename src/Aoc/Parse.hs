@@ -16,7 +16,7 @@ module Aoc.Parse
   )
 where
 
-import Aoc.Def (Challenge, getInputFile)
+import Aoc.Definitions (Challenge, getInputFile)
 import qualified Data.Attoparsec.ByteString.Char8 as AB
 import qualified Data.Attoparsec.Text as AT
 import qualified Data.ByteString.Char8 as B

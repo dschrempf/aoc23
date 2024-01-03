@@ -141,9 +141,11 @@ insertRows ::
   Ix1 ->
   Array r Ix2 e ->
   Array r Ix2 e
-insertRows rows at ar = A.compute $ A.concat' 2 [top, A.delay rows, bottom]
+insertRows rowsToInsert at array =
+  A.compute $
+    A.concat' 2 [top, A.delay rowsToInsert, bottom]
   where
-    (top, bottom) = A.splitAt' 2 at ar
+    (top, bottom) = A.splitAt' 2 at array
 
 insertCols ::
   (Manifest r e) =>
@@ -151,9 +153,11 @@ insertCols ::
   Ix1 ->
   Array r Ix2 e ->
   Array r Ix2 e
-insertCols cols at ar = A.compute $ A.concat' 1 [left, A.delay cols, right]
+insertCols colsToInsert at array =
+  A.compute $
+    A.concat' 1 [left, A.delay colsToInsert, right]
   where
-    (left, right) = A.splitAt' 1 at ar
+    (left, right) = A.splitAt' 1 at array
 
 parseMatrix :: (Manifest r a) => [(Char, a)] -> Parser (Array r Ix2 a)
 parseMatrix mp = A.fromLists' Seq <$> some el `sepBy1'` endOfLine

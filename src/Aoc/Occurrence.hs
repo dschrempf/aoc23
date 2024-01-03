@@ -11,7 +11,7 @@
 -- Creation date: Mon Dec 12 09:37:29 2022.
 module Aoc.Occurrence
   ( OccurrenceMap,
-    count,
+    countOccurrences,
   )
 where
 
@@ -24,5 +24,5 @@ addElem :: (Ord a) => OccurrenceMap a -> a -> OccurrenceMap a
 addElem m k = M.insertWith (const succ) k 1 m
 
 -- | Count the number of occurrences of things in a container.
-count :: (Foldable f, Ord a) => f a -> OccurrenceMap a
-count = foldl' addElem M.empty
+countOccurrences :: (Foldable f, Ord a) => f a -> OccurrenceMap a
+countOccurrences = foldl' addElem M.empty

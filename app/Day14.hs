@@ -21,7 +21,7 @@ where
 
 import Aoc (parseChallengeT)
 import Aoc.Array (parseMatrix, rotateLeft, rotateRight)
-import Aoc.Def
+import Aoc.Definitions
 import Aoc.Function (nTimesStrict)
 import Aoc.List (findCycle, findFirstDuplicate)
 import Aoc.Monad ((<.>))

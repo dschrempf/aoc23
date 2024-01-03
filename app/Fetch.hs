@@ -2,7 +2,7 @@
 
 module Main (main) where
 
-import Aoc.Def (Challenge (..), getDay, getInputFile, year)
+import Aoc.Definitions (Challenge (..), getDay, getInputFile, year)
 import Configuration.Dotenv (defaultConfig, loadFile)
 import Control.Monad.Catch (MonadThrow)
 import qualified Data.ByteString as B

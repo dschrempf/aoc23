@@ -39,7 +39,7 @@ import Data.Attoparsec.Text
   )
 import Data.Bifunctor (Bifunctor (..))
 import Data.Char (isHexDigit)
-import Data.List (foldl1', nub)
+import Data.List (nub)
 import Data.Massiv.Array (Ix2 (..), Sz (..))
 import qualified Data.Massiv.Array as A
 import Data.Set (Set)

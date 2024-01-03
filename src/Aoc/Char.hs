@@ -11,7 +11,7 @@
 -- Creation date: Sun Sep 24 22:11:59 2023.
 module Aoc.Char
   ( readDigit,
-    charToAlphaIndexBase1,
+    getAlphaIndexBase1,
   )
 where
 
@@ -21,8 +21,8 @@ import Data.List
 readDigit :: Char -> Int
 readDigit = read . singleton
 
-charToAlphaIndexBase1 :: Char -> Int
-charToAlphaIndexBase1 c = succ $ ci - ai
+getAlphaIndexBase1 :: Char -> Int
+getAlphaIndexBase1 c = succ $ ci - ai
   where
     ai = ord 'a'
     ci = ord $ toLower c

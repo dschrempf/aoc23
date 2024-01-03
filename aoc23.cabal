@@ -64,7 +64,7 @@ library
     Aoc.Array
     Aoc.Bounded
     Aoc.Char
-    Aoc.Def
+    Aoc.Definitions
     Aoc.Direction
     Aoc.Factor
     Aoc.Function

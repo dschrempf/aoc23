@@ -19,7 +19,7 @@ module Aoc
   )
 where
 
-import Aoc.Def (Challenge (..), Day)
+import Aoc.Definitions (Challenge (..), Day)
 import Aoc.Parse (parseChallengeB, parseChallengeT)
 import Data.ByteString.Char8 (ByteString)
 import Data.Text (Text)

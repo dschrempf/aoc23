@@ -35,7 +35,8 @@ pairs :: [a] -> [(a, a)]
 pairs [] = []
 pairs (x : xs) = map (x,) xs ++ pairs xs
 
--- | Search for a cycle in a list.
+-- | Search for a cycle in a list; the cycle length is unknown, but assume the
+-- cycle starts at the beginning of the list.
 findCycle ::
   (Eq a) =>
   -- | Maximum length.

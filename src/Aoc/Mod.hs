@@ -38,7 +38,7 @@ modExp b e m
   where
     r = modExp b (e `div` 2) m
 
--- @inverse m a@ is the modular inverse of @a mod m@.
+-- | @inverse m a@ is the modular inverse of @a mod m@.
 --
 -- That is, if @b = inverse m a@, then @(b*a) mod m = 1@. The last identity is
 -- often written as @b*a = 1 (mod m)@, which is a bit confusing.

@@ -17,7 +17,7 @@ module Main
 where
 
 import Aoc
-import Aoc.Occurrence (count)
+import Aoc.Occurrence (countOccurrences)
 import Control.Applicative (Alternative (..), (<|>))
 import Data.Attoparsec.Text (Parser, char, decimal, endOfInput, endOfLine, sepBy1', skipSpace)
 import Data.List (sort, sortBy, sortOn)
@@ -70,7 +70,7 @@ getType (Hand cs)
     nJs = length $ filter (== J) cs
     csNoJ = filter (/= J) cs
     sorted = sort csNoJ
-    occurences = M.elems $ count sorted
+    occurences = M.elems $ countOccurrences sorted
     counts' = sortBy (comparing Down) occurences
     counts
       | null counts' = [5]
