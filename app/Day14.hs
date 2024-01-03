@@ -20,7 +20,7 @@ module Main
 where
 
 import Aoc (parseChallengeT)
-import Aoc.Array (pMatrix, rotateLeft, rotateRight)
+import Aoc.Array (parseMatrix, rotateLeft, rotateRight)
 import Aoc.Def
 import Aoc.Function (nTimesStrict)
 import Aoc.List (findCycle, findFirstDuplicate)
@@ -60,7 +60,7 @@ instance Show Position where
 type Field = Array B Ix2 Position
 
 pField :: Parser Field
-pField = pMatrix [('O', Rolling), ('#', Fixed), ('.', Empty)]
+pField = parseMatrix [('O', Rolling), ('#', Fixed), ('.', Empty)]
 
 rollStonesToLastFixed ::
   (Manifest r Position, PrimMonad m, A.MonadThrow m) =>

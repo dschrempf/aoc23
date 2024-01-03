@@ -21,7 +21,7 @@ module Aoc.Array
     filterA,
     insertRows,
     insertCols,
-    pMatrix,
+    parseMatrix,
     nRows,
     nCols,
     rotateLeft,
@@ -155,8 +155,8 @@ insertCols cols at ar = A.compute $ A.concat' 1 [left, A.delay cols, right]
   where
     (left, right) = A.splitAt' 1 at ar
 
-pMatrix :: (Manifest r a) => [(Char, a)] -> Parser (Array r Ix2 a)
-pMatrix mp = A.fromLists' Seq <$> some el `sepBy1'` endOfLine
+parseMatrix :: (Manifest r a) => [(Char, a)] -> Parser (Array r Ix2 a)
+parseMatrix mp = A.fromLists' Seq <$> some el `sepBy1'` endOfLine
   where
     el = choice [category <$ char character | (character, category) <- mp]
 
@@ -166,8 +166,10 @@ nRows = fst . A.unconsDim . A.unSz . A.size
 nCols :: (Size r) => Array r Ix2 e -> Int
 nCols = snd . A.unsnocDim . A.unSz . A.size
 
+-- | Rotate counterclockwise by 90 degrees.
 rotateLeft :: (Manifest r e) => Array r Ix2 e -> Array r Ix2 e
 rotateLeft = A.compute . A.reverse Dim2 . A.transpose
 
+-- | Rotate clockwise by 90 degrees.
 rotateRight :: (Manifest r e) => Array r Ix2 e -> Array r Ix2 e
 rotateRight = A.compute . A.transpose . A.reverse Dim2

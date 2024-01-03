@@ -19,7 +19,7 @@ module Main
 where
 
 import Aoc (Challenge (..), parseChallengeT)
-import Aoc.Array (filterA, nCols, nRows, pMatrix)
+import Aoc.Array (filterA, nCols, nRows, parseMatrix)
 import Data.Attoparsec.Text (Parser, endOfInput, endOfLine, sepBy1', skipSpace)
 import Data.List (singleton)
 import Data.Massiv.Array (Array, B, D, Dimension (..), Ix2 (..), Source, Sz (..))
@@ -39,7 +39,7 @@ instance Show Point where
 type Field = Array B Ix2 Point
 
 pField :: Parser Field
-pField = pMatrix [('.', Ash), ('#', Rock)]
+pField = parseMatrix [('.', Ash), ('#', Rock)]
 
 pInput :: Parser [Field]
 pInput = pField `sepBy1'` skipSpace <* endOfLine <* endOfInput

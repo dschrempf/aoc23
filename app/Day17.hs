@@ -17,7 +17,7 @@ module Main
 where
 
 import Aoc
-import Aoc.Array (pMatrix)
+import Aoc.Array (parseMatrix)
 import Aoc.Direction (Direction (..), moveNStepsInDirection, turnLeft, turnRight)
 import Data.Attoparsec.Text (Parser)
 import Data.Map (Map)
@@ -31,7 +31,7 @@ type Field = Array B Ix2 Natural
 
 pInput :: Parser Field
 pInput =
-  pMatrix
+  parseMatrix
     [ ('1', 1),
       ('2', 2),
       ('3', 3),

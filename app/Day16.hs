@@ -17,7 +17,7 @@ module Main
 where
 
 import Aoc
-import Aoc.Array (pMatrix)
+import Aoc.Array (parseMatrix)
 import Aoc.Direction
 import Data.Attoparsec.Text (Parser)
 import Data.Foldable (Foldable (..), maximumBy)
@@ -40,7 +40,7 @@ type Contraption = Array B Ix2 Tile
 
 pContraption :: Parser Contraption
 pContraption =
-  pMatrix
+  parseMatrix
     [ ('.', Empty),
       ('/', MirrorSlash),
       ('\\', MirrorBackSlash),
