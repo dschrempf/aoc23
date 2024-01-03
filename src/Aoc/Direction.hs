@@ -28,21 +28,21 @@ import Data.Maybe (catMaybes)
 data Direction = North | East | South | West
   deriving (Show, Eq, Ord, Bounded, Enum)
 
-toDirectionNS :: Int -> Maybe Direction
-toDirectionNS x = case compare x 0 of
+signToDirectionNS :: Int -> Maybe Direction
+signToDirectionNS x = case compare x 0 of
   GT -> Just South
   LT -> Just North
   EQ -> Nothing
 
-toDirectionEW :: Int -> Maybe Direction
-toDirectionEW x = case compare x 0 of
+signToDirectionEW :: Int -> Maybe Direction
+signToDirectionEW x = case compare x 0 of
   LT -> Just West
   GT -> Just East
   EQ -> Nothing
 
 -- | Extract direction components.
 ix2ToDirections :: Ix2 -> [Direction]
-ix2ToDirections (x :. y) = catMaybes [toDirectionNS x, toDirectionEW y]
+ix2ToDirections (x :. y) = catMaybes [signToDirectionNS x, signToDirectionEW y]
 
 -- | Get shortest delta index from direction.
 directionToIx2 :: Direction -> Ix2
