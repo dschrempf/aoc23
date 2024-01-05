@@ -20,7 +20,12 @@ where
 
 import Aoc
 import Aoc.Bounded (predWrap, succWrap)
-import Aoc.Direction (Direction (..), directionToIx2, isHorizontal, ix2ToDirections, moveNStepsInDirection)
+import Aoc.Direction
+  ( Direction (..),
+    directionToIx2,
+    ix2ToDirections,
+    moveNStepsInDirection,
+  )
 import Aoc.Parse (skipHorizontalSpace)
 import Data.Attoparsec.Text
   ( Parser,
@@ -170,11 +175,20 @@ pColorInstruction = do
 pDigPlanColor :: Parser [Instruction]
 pDigPlanColor = pColorInstruction `sepBy1'` endOfLine <* endOfLine <* endOfInput
 
+excavate2 :: [Instruction] -> Trench
+excavate2 = foldl accF [0 :. 0]
+  where
+    accF (pos : trench) (Instruction dir len) =
+      let pos' = moveNStepsInDirection (fromIntegral len) pos dir
+          trench' = pos' : pos : trench
+       in trench'
+    accF [] _ = error "no current position"
+
 main :: IO ()
 main = do
   is1 <- parseChallengeT (Sample 18 1) pDigPlan
   let trenchShifted = excavate is1
   print $ getSize trenchShifted
   is2 <- parseChallengeT (Full 18) pDigPlanColor
-  let horLs = map edgeLength $ filter (isHorizontal . direction) is2
-  print horLs
+  let corners = excavate2 is2
+  print corners
