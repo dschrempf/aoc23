@@ -25,6 +25,7 @@ import Aoc.Direction
     directionToIx2,
     ix2ToDirections,
     moveNStepsInDirection,
+    turnLeft,
   )
 import Aoc.Parse (skipHorizontalSpace)
 import Data.Attoparsec.Text
@@ -188,19 +189,6 @@ excavate2 = foldl accF [0 :. 0]
 slices :: Int -> Int -> Int -> Bool
 slices x a b = (a < x && x < b) || (a > x && x > b)
 
--- -- Assume ms are sorted.
--- sliceTrenchH :: [Int] -> Trench -> Trench
--- sliceTrenchH ms ((m1 :. n1) : (m2 :. n2) : xs) =
---   (m1 :. n1) : additionalPointsCorrectOrder ++ sliceTrenchH ms ((m2 :. n2) : xs)
---   where
---     msSlicing = filter (\m -> slices m m1 m2) ms
---     additionalPoints = [m :. n1 | m <- msSlicing]
---     additionalPointsCorrectOrder =
---       if m1 < m2
---         then additionalPoints
---         else reverse additionalPoints
--- sliceTrenchH _ xs = xs
-
 data Area = Inside Int | Outside
 
 type VerticalLine = (Ix2, Ix2)
@@ -210,6 +198,20 @@ getVerticalLines (x : y : zs)
   | A.lastDim x == A.lastDim y = (x, y) : getVerticalLines (y : zs)
   | otherwise = getVerticalLines (y : zs)
 getVerticalLines _ = []
+
+data Turn = TurnLeft | TurnRight
+  deriving (Show, Eq)
+
+turnOutside = TurnLeft
+
+getVerticalLinesWithTurns :: [(Ix2, Turn)] -> [VerticalLine]
+getVerticalLinesWithTurns ((xm :. xn, tX) : y@(ym :. yn, tY) : zs)
+  | xn == yn =
+      let xm' = if tX == turnOutside then (if xm < ym then succ xm else pred xm) else xm
+          ym' = if tY == turnOutside then (if xm < ym then pred ym else succ ym) else ym
+       in (xm' :. xn, ym' :. yn) : getVerticalLinesWithTurns (y : zs)
+  | otherwise = getVerticalLinesWithTurns (y : zs)
+getVerticalLinesWithTurns _ = []
 
 sort2 :: Int -> Int -> (Int, Int)
 sort2 a b
@@ -247,17 +249,38 @@ getSliceIntervals (a : b : ms)
 getSliceIntervals [a] = [(a, a)]
 getSliceIntervals [] = []
 
+directionsToTurn :: Direction -> Direction -> Turn
+directionsToTurn a b
+  | turnLeft a == b = TurnLeft
+  | otherwise = TurnRight
+
+getTrenchWithTurns' :: [Ix2] -> [(Ix2, Turn)]
+getTrenchWithTurns' (x : y : z : zs) =
+  (y, directionsToTurn a b) : getTrenchWithTurns' (y : z : zs)
+  where
+    a = head $ ix2ToDirections (traceShowId y - traceShowId x)
+    b = head $ ix2ToDirections (z - y)
+getTrenchWithTurns' _ = []
+
+getTrenchWithTurns :: [Ix2] -> [(Ix2, Turn)]
+getTrenchWithTurns xs = getTrenchWithTurns' $ traceShowId $ before : xs ++ [after]
+  where
+    before = last (init xs)
+    after = head $ tail xs
+
 main :: IO ()
 main = do
   is1 <- parseChallengeT (Sample 18 1) pDigPlan
   let trenchShifted = excavate is1
   print $ getSize trenchShifted
-  -- is2 <- parseChallengeT (Sample 18 1) pDigPlanColor
-  let trenchCorners = reverse $ excavate2 is1
-  let ms = nub $ sort $ map A.headDim trenchCorners
-      verticalLines = getVerticalLines trenchCorners
+  is2 <- parseChallengeT (Full 18) pDigPlanColor
+  let trenchCorners = reverse $ excavate2 is2
+      trenchCornersWithTurns = getTrenchWithTurns trenchCorners
+      verticalLines = getVerticalLinesWithTurns trenchCornersWithTurns
       sortedVerticalLines = nub $ sortOn (A.lastDim . fst) verticalLines
+      ms = nub $ sort $ map A.headDim trenchCorners
       sliceIntervals = getSliceIntervals ms
       areas = [areaOfSlice a b sortedVerticalLines | (a, b) <- sliceIntervals]
-  print sliceIntervals
+  print verticalLines
   print areas
+  print $ sum areas
