@@ -44,11 +44,12 @@ import Data.Attoparsec.Text
   )
 import Data.Bifunctor (Bifunctor (..))
 import Data.Char (isHexDigit)
-import Data.List (nub)
+import Data.List (nub, sort, sortOn)
 import Data.Massiv.Array (Ix2 (..), Sz (..))
 import qualified Data.Massiv.Array as A
 import Data.Set (Set)
 import qualified Data.Set as S
+import Debug.Trace
 import GHC.Natural (Natural)
 
 data Instruction = Instruction {direction :: Direction, edgeLength :: Natural}
@@ -184,11 +185,46 @@ excavate2 = foldl accF [0 :. 0]
        in trench'
     accF [] _ = error "no current position"
 
+slices :: Int -> Int -> Int -> Bool
+slices x a b = (a < x && x < b) || (a > x && x > b)
+
+-- Assume ms are sorted.
+sliceTrenchH :: [Int] -> Trench -> Trench
+sliceTrenchH ms ((m1 :. n1) : (m2 :. n2) : xs) =
+  (m1 :. n1) : additionalPoints ++ sliceTrenchH ms ((m2 :. n2) : xs)
+  where
+    msSlicing = filter (\m -> slices m m1 m2) ms
+    additionalPoints = [m :. n1 | m <- msSlicing]
+sliceTrenchH _ xs = xs
+
+data Area = Inside Int | Outside
+
+-- Assume xs are sorted by columns.
+areaOfSlice :: Int -> Int -> Trench -> Int
+areaOfSlice from to xs = go Outside pointsAtA pointsAtB
+  where
+    pointsAtA = traceShowId $ filter ((== from) . A.headDim) xs
+    pointsAtB = traceShowId $ filter ((== to) . A.headDim) xs
+    go area as@(a : asTail) bs@(b : bsTail)
+      -- Vertical line.
+      | A.lastDim a == A.lastDim b = case area of
+          (Inside n) -> (A.lastDim a - n) * (to - from) + go Outside asTail bsTail
+          Outside -> go (Inside $ A.lastDim a) asTail bsTail
+      | A.lastDim a < A.lastDim b = go area asTail bs
+      | A.lastDim a > A.lastDim b = go area as bsTail
+    go (Inside _) _ _ = error "areaOfSlice: inside but no more points"
+    go _ _ _ = 0
+
 main :: IO ()
 main = do
   is1 <- parseChallengeT (Sample 18 1) pDigPlan
   let trenchShifted = excavate is1
   print $ getSize trenchShifted
-  is2 <- parseChallengeT (Full 18) pDigPlanColor
-  let corners = excavate2 is2
-  print corners
+  -- is2 <- parseChallengeT (Sample 18 1) pDigPlanColor
+  let trenchCorners = reverse $ excavate2 is1
+  let ms = nub $ sort $ map A.headDim trenchCorners
+      trenchWithSlices = sliceTrenchH ms trenchCorners
+      sortedTrenchWithSlices = nub $ sortOn A.lastDim trenchWithSlices
+      sliceIntervals = zip ms (tail ms)
+      areas = [areaOfSlice a b sortedTrenchWithSlices | (a, b) <- sliceIntervals]
+  print areas
