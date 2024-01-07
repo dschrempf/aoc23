@@ -26,4 +26,6 @@ I added automatic fetching of the full input as well as the samples (see
 -   **Day 3:** A grid puzzle on day three &#x2014; that's a bit unexpected.
 -   **Day 6:** I loved this puzzle as it contained elements of physics.
 -   **Day 12:** Part 2 required memoization which is tedious in Haskell&#x2026;
+-   **Day 19:** I really enjoyed this puzzle. Parsing the input, cutting the
+    hyper-cubes; everything feels so smooth in Haskell.
 
