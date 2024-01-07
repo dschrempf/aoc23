@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 -- |
@@ -36,7 +37,7 @@ import Data.Foldable (asum)
 import Data.List (nub, sort)
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.Maybe (fromJust)
+import Data.Maybe (fromJust, fromMaybe)
 import Data.Set (Set)
 import qualified Data.Set as S
 
@@ -82,11 +83,19 @@ pParts = pPart `sepBy1'` endOfLine
 
 type WorkflowName = Text
 
-type Rule = Part -> Maybe WorkflowName
+-- type Rule = Part -> Maybe WorkflowName
+
+data Rule = Rule
+  { category :: Category,
+    comparison :: Comparison,
+    thresholdValue :: Int,
+    targetWorkflow :: WorkflowName
+  }
 
 data Workflow = Workflow
   { name :: WorkflowName,
-    rules :: [Rule]
+    rules :: [Rule],
+    catchall :: WorkflowName
   }
 
 data Comparison = Less | Greater
@@ -94,35 +103,24 @@ data Comparison = Less | Greater
 pComparison :: Parser Comparison
 pComparison = Less <$ char '<' <|> Greater <$ char '>'
 
-toRule :: Category -> Comparison -> Int -> WorkflowName -> Rule
-toRule category comparison thresholdValue targetWorkflow part
-  | part category `cmpOp` thresholdValue = Just targetWorkflow
-  | otherwise = Nothing
-  where
-    cmpOp = case comparison of
-      Less -> (<)
-      Greater -> (>)
-
 pWorkflowName :: Parser WorkflowName
 pWorkflowName = takeWhile1 isAlpha
 
 pRule :: Parser Rule
-pRule = toRule <$> pCategory <*> pComparison <*> decimal <*> (char ':' *> pWorkflowName)
+pRule = Rule <$> pCategory <*> pComparison <*> decimal <*> (char ':' *> pWorkflowName)
 
-pLastRule :: Parser Rule
-pLastRule = pAccept <|> pReject <|> pOtherWorkflow
-  where
-    pAccept = const (Just "A") <$ char 'A'
-    pReject = const (Just "R") <$ char 'R'
-    pOtherWorkflow = const . Just <$> pWorkflowName
+pCatchAll :: Parser WorkflowName
+pCatchAll = pWorkflowName
 
 pWorkflow :: Parser Workflow
 pWorkflow = do
   n <- pWorkflowName
   _ <- char '{'
-  rs <- (pRule <|> pLastRule) `sepBy1'` char ','
+  rs <- pRule `sepBy1'` char ','
+  _ <- char ','
+  ca <- pCatchAll
   _ <- char '}'
-  pure $ Workflow n rs
+  pure $ Workflow n rs ca
 
 type Workflows = Map WorkflowName Workflow
 
@@ -140,8 +138,17 @@ pInput = do
   _ <- endOfInput
   pure (wfs, ps)
 
+applyRule :: Rule -> Part -> Maybe WorkflowName
+applyRule rule part
+  | part rule.category `cmpOp` rule.thresholdValue = Just rule.targetWorkflow
+  | otherwise = Nothing
+  where
+    cmpOp = case rule.comparison of
+      Less -> (<)
+      Greater -> (>)
+
 rate1 :: Workflow -> Part -> WorkflowName
-rate1 (Workflow _ rs) p = fromJust $ asum [r p | r <- rs]
+rate1 (Workflow _ rs ca) p = fromMaybe ca $ asum [applyRule r p | r <- rs]
 
 rate :: Workflows -> Part -> Int
 rate = go "in"
@@ -163,8 +170,8 @@ data Tesseract = Tesseract
   }
   deriving (Show, Eq, Ord)
 
-computeAcceptedTesseracts :: Tesseract -> Set Tesseract
-computeAcceptedTesseracts = undefined
+computeAcceptedTesseracts :: Workflow -> Tesseract -> Set Tesseract
+computeAcceptedTesseracts (Workflow _ rs ca) (Tesseract x m a s) = undefined
 
 main :: IO ()
 main = do
