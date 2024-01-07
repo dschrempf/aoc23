@@ -33,11 +33,11 @@ import Data.Attoparsec.Text
     takeWhile1,
   )
 import Data.Char (isAlpha)
-import Data.Foldable (asum)
+import Data.Foldable (Foldable (..), asum)
 import Data.List (nub, sort)
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.Maybe (fromJust, fromMaybe)
+import Data.Maybe (fromMaybe)
 import Data.Set (Set)
 import qualified Data.Set as S
 
@@ -94,8 +94,8 @@ data Rule = Rule
 
 data Workflow = Workflow
   { name :: WorkflowName,
-    rules :: [Rule],
-    catchall :: WorkflowName
+    _rules :: [Rule],
+    _catchall :: WorkflowName
   }
 
 data Comparison = Less | Greater
@@ -170,10 +170,76 @@ data Tesseract = Tesseract
   }
   deriving (Show, Eq, Ord)
 
-computeAcceptedTesseracts :: Workflow -> Tesseract -> Set Tesseract
-computeAcceptedTesseracts (Workflow _ rs ca) (Tesseract x m a s) = undefined
+categoryToAccessor :: Category -> (Tesseract -> Interval)
+categoryToAccessor X = xdim
+categoryToAccessor M = mdim
+categoryToAccessor A = adim
+categoryToAccessor S = sdim
+
+updateTesseract :: Category -> Interval -> Tesseract -> Tesseract
+updateTesseract X i t = t {xdim = i}
+updateTesseract M i t = t {mdim = i}
+updateTesseract A i t = t {adim = i}
+updateTesseract S i t = t {sdim = i}
+
+cutInterval :: Interval -> Int -> Comparison -> (Maybe Interval, Maybe Interval)
+cutInterval (a, b) c Less
+  | a < c && c <= b = (Just (a, pred c), Just (c, b))
+  | a < c = (Just (a, b), Nothing)
+  | otherwise = (Nothing, Just (a, b))
+cutInterval (a, b) c Greater
+  | c < b && a <= c = (Just (succ c, b), Just (a, c))
+  | c < b = (Just (a, b), Nothing)
+  | otherwise = (Nothing, Just (a, b))
+
+maybeSplitTesseract :: Workflows -> Rule -> Tesseract -> (Set Tesseract, Maybe Tesseract)
+maybeSplitTesseract ws r t = (acceptedTesseracts, rejectTesseract <$> mFallThrough)
+  where
+    accessor = categoryToAccessor r.category
+    interval = accessor t
+    (mAccepted, mFallThrough) = cutInterval interval r.thresholdValue r.comparison
+    acceptedTesseracts = case mAccepted of
+      Nothing -> S.empty
+      Just acceptedInterval ->
+        let t' = updateTesseract r.category acceptedInterval t
+         in computeAcceptedTesseracts1 ws r.targetWorkflow t'
+    rejectTesseract i = updateTesseract r.category i t
+
+collectTesseracts ::
+  Workflows ->
+  (Set Tesseract, Maybe Tesseract) ->
+  Rule ->
+  (Set Tesseract, Maybe Tesseract)
+collectTesseracts _ (accepted, Nothing) _ = (accepted, Nothing)
+collectTesseracts ws (accepted, Just t) r =
+  let (accepted', rejected') = maybeSplitTesseract ws r t
+   in (accepted `S.union` accepted', rejected')
+
+computeAcceptedTesseracts1 :: Workflows -> WorkflowName -> Tesseract -> Set Tesseract
+computeAcceptedTesseracts1 _ "A" t = S.singleton t
+computeAcceptedTesseracts1 _ "R" _ = S.empty
+computeAcceptedTesseracts1 ws nm t = case mRejected of
+  Nothing -> accepted
+  Just t' -> accepted `S.union` computeAcceptedTesseracts1 ws ca t'
+  where
+    (Workflow _ rs ca) = ws M.! nm
+    (accepted, mRejected) = foldl' (collectTesseracts ws) (S.empty, Just t) rs
+
+computeAcceptedTesseracts :: Workflows -> Set Tesseract
+computeAcceptedTesseracts ws = computeAcceptedTesseracts1 ws "in" t
+  where
+    t = Tesseract (1, 4000) (1, 4000) (1, 4000) (1, 4000)
+
+getLength :: Interval -> Int
+getLength (a, b) = succ $ b - a
+
+getVolumne :: Tesseract -> Integer
+getVolumne (Tesseract x m a s) = f x * f m * f a * f s
+  where
+    f = fromIntegral . getLength
 
 main :: IO ()
 main = do
   (workflows, parts) <- parseChallengeT (Full 19) pInput
   print $ sum $ map (rate workflows) parts
+  print $ sum $ map getVolumne $ S.toList $ computeAcceptedTesseracts workflows
