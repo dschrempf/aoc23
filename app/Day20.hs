@@ -38,7 +38,6 @@ import Data.List (find, nub, partition)
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (isJust)
-import Debug.Trace (traceShowId)
 import GHC.Generics (Generic)
 
 data PulseType = Low | High
@@ -194,7 +193,7 @@ pd :: (Int, (Modules, [Pulse])) -> IO ()
 pd (n, (_, ps))
   | not $ null psf = do
       print n
-      mapM_ print $ psf
+      mapM_ print psf
       putStrLn ""
   | otherwise = pure ()
   where
@@ -207,10 +206,13 @@ main = do
   let (_, ps) = nTimesStrict 1000 press (ms, [])
       (ls, hs) = partition (\(Pulse _ _ x) -> x == Low) ps
   print $ length ls * length hs
-  -- -- That's how I found the period for the four modules targeting the
-  -- -- conjunction targeting "rx":
-  -- let msTargetingRx = M.keys $ M.filter (isJust . find (== "rx") . destinations) ms
-  -- print $ msTargetingRx
-  -- let pss = take 20000 $ zip [0 ..] $ iterate press2 (ms, [])
-  -- mapM_ pd pss
-  print $ foldl lcm 1 [3797, 3847, 3877, 4051]
+  -- That's how I found the period for the four modules targeting the
+  -- conjunction targeting "rx":
+  let msTargetingRx = M.keys $ M.filter (isJust . find (== "rx") . destinations) ms
+  print msTargetingRx
+  let msTargetingNs = M.keys $ M.filter (isJust . find (== "ns") . destinations) ms
+  print msTargetingNs
+  let pss = take 20000 $ zip [0 ..] $ iterate press2 (ms, [])
+  mapM_ pd pss
+  -- The least common multiple of the four periods is the solution.
+  print $ foldl lcm 1 [3797, 3847, 3877, 4051 :: Int]
