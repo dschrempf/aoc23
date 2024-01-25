@@ -34,7 +34,7 @@ import Data.Attoparsec.Text
   )
 import Data.Char (isAlpha)
 import Data.Foldable (Foldable (..))
-import Data.List (nub)
+import Data.List (nub, partition)
 import Data.Map (Map)
 import qualified Data.Map as M
 import GHC.Generics (Generic)
@@ -51,12 +51,10 @@ instance NFData FlipFlopState
 
 type ModuleName = Text
 
-type Input = Text
-
 data ModuleType
   = Broadcaster
   | FlipFlop FlipFlopState
-  | Conjunction (Map Input PulseType)
+  | Conjunction (Map ModuleName PulseType)
   deriving (Show, Eq, Generic)
 
 instance NFData ModuleType
@@ -94,42 +92,67 @@ pConjunction = char '&' *> pStandardModuleWith (Conjunction M.empty)
 pModule :: Parser Module
 pModule = pBroadcaster <|> pFlipFlop <|> pConjunction
 
+type Modules = Map ModuleName Module
+
+isConjunction :: ModuleType -> Bool
+isConjunction (Conjunction _) = True
+isConjunction _ = False
+
+connectConjunction :: Module -> [Module] -> Module
+connectConjunction (Module (Conjunction _) n ds) is = Module (Conjunction ss') n ds
+  where
+    ss' = M.fromList $ [(moduleName i, Low) | i <- is]
+connectConjunction _ _ = error "bug"
+
+connectConjunctions :: Modules -> Modules
+connectConjunctions ms = foldl' connectAndInsertConjunction ms cs
+  where
+    cs = M.filter (isConjunction . moduleType) ms
+    msWithCAsDestination c = filter (elem (moduleName c) . destinations) $ M.elems ms
+    connectAndInsertConjunction ys c =
+      let c' = connectConjunction c (msWithCAsDestination c)
+       in M.insert (moduleName c) c' ys
+
+pInput :: Parser Modules
+pInput =
+  connectConjunctions
+    . M.fromList
+    . map extractModuleName
+    <$> pModule `sepBy1'` endOfLine
+  where
+    extractModuleName m = (moduleName m, m)
+
 data Pulse = Pulse
   { source :: ModuleName,
     destination :: ModuleName,
     pulseType :: PulseType
   }
-  deriving (Show)
+  deriving (Show, Generic)
+
+instance NFData Pulse
 
 data State = State
-  { modules :: Map ModuleName Module,
+  { modules :: Modules,
     _pulsesInLine :: [Pulse],
-    pulsesSent :: (Int, Int)
+    pulsesSent :: [Pulse]
   }
 
-pInput :: Parser (Map ModuleName Module)
-pInput = M.fromList . map extractModuleName <$> pModule `sepBy1'` endOfLine
-  where
-    extractModuleName m = (moduleName m, m)
-
-press :: (Map ModuleName Module, (Int, Int)) -> (Map ModuleName Module, (Int, Int))
-press (ms, (l, h)) =
-  let s' = pulses $ State ms [Pulse "button" "broadcaster" Low] (0, 0)
-      (dl, dh) = pulsesSent s'
-   in (modules s', (l + dl, h + dh))
+press :: (Modules, [Pulse]) -> (Modules, [Pulse])
+press (ms, ps) =
+  let p = Pulse "button" "broadcaster" Low
+      s' = pulses $ State ms [p] [p]
+   in (modules s', ps <> pulsesSent s')
 
 pulses :: State -> State
 pulses s@(State _ [] _) = s
-pulses (State ms (x : xs) (l, h)) =
-  let (ms', ys) = pulseM x ms
-      (l', h') = case pulseType x of
-        Low -> (succ l, h)
-        High -> (l, succ h)
+pulses (State ms (x : xs) ps) =
+  let (ms', ys) = pulse x ms
    in pulses $
-        State ms' (xs <> ys) (l', h')
+        State ms' (xs <> ys) $
+          ps <> ys
 
-pulseM :: Pulse -> Map ModuleName Module -> (Map ModuleName Module, [Pulse])
-pulseM p ms = (M.insert d m' ms, ps)
+pulse :: Pulse -> Modules -> (Modules, [Pulse])
+pulse p ms = (M.insert d m' ms, ps)
   where
     d = destination p
     m = case ms M.!? d of
@@ -152,29 +175,12 @@ pulse1 p (Module (Conjunction ss) n ds) =
       t = if nub (M.elems ss') == [High] then Low else High
    in (Module (Conjunction ss') n ds, [Pulse n d t | d <- ds])
 
-isConjunction :: ModuleType -> Bool
-isConjunction (Conjunction _) = True
-isConjunction _ = False
-
-connectConjunction :: Module -> [Module] -> Module
-connectConjunction (Module (Conjunction _) n ds) is = Module (Conjunction ss') n ds
-  where
-    ss' = M.fromList $ [(moduleName i, Low) | i <- is]
-connectConjunction _ _ = error "bug"
-
-connectConjunctions :: Map ModuleName Module -> Map ModuleName Module
-connectConjunctions ms = foldl' connectAndInsertConjunction ms cs
-  where
-    cs = M.filter (isConjunction . moduleType) ms
-    msWithCAsDestination c = filter (elem (moduleName c) . destinations) $ M.elems ms
-    connectAndInsertConjunction ys c =
-      let c' = connectConjunction c (msWithCAsDestination c)
-       in M.insert (moduleName c) c' ys
-
 main :: IO ()
 main = do
   ms <- parseChallengeT (Full 20) pInput
-  let ms' = connectConjunctions ms
-  print ms'
-  let (_, (l, h)) = nTimesStrict 1000 press (ms', (0, 0))
-  print $ l * h
+  print ms
+  let (_, ps) = nTimesStrict 1000 press (ms, [])
+  let (ls, hs) = partition (\(Pulse _ _ x) -> x == Low) ps
+  print $ length ls
+  print $ length hs
+  print $ length ls * length hs
