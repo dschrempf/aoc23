@@ -34,9 +34,11 @@ import Data.Attoparsec.Text
   )
 import Data.Char (isAlpha)
 import Data.Foldable (Foldable (..))
-import Data.List (nub, partition)
+import Data.List (find, nub, partition)
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Maybe (isJust)
+import Debug.Trace (traceShowId)
 import GHC.Generics (Generic)
 
 data PulseType = Low | High
@@ -175,12 +177,40 @@ pulse1 p (Module (Conjunction ss) n ds) =
       t = if nub (M.elems ss') == [High] then Low else High
    in (Module (Conjunction ss') n ds, [Pulse n d t | d <- ds])
 
+isRxLowPulse :: Pulse -> Bool
+isRxLowPulse (Pulse _ "rx" Low) = True
+isRxLowPulse _ = False
+
+isRx :: (Int, (Modules, [Pulse])) -> Bool
+isRx (_, (_, ps)) = length (filter isRxLowPulse ps) == 1
+
+press2 :: (Modules, [Pulse]) -> (Modules, [Pulse])
+press2 (ms, _) =
+  let p = Pulse "button" "broadcaster" Low
+      s' = pulses $ State ms [p] [p]
+   in (modules s', pulsesSent s')
+
+pd :: (Int, (Modules, [Pulse])) -> IO ()
+pd (n, (_, ps))
+  | not $ null psf = do
+      print n
+      mapM_ print $ psf
+      putStrLn ""
+  | otherwise = pure ()
+  where
+    psf = filter (\x -> destination x == "ns" && pulseType x == High) ps
+
 main :: IO ()
 main = do
   ms <- parseChallengeT (Full 20) pInput
   print ms
   let (_, ps) = nTimesStrict 1000 press (ms, [])
-  let (ls, hs) = partition (\(Pulse _ _ x) -> x == Low) ps
-  print $ length ls
-  print $ length hs
+      (ls, hs) = partition (\(Pulse _ _ x) -> x == Low) ps
   print $ length ls * length hs
+  -- -- That's how I found the period for the four modules targeting the
+  -- -- conjunction targeting "rx":
+  -- let msTargetingRx = M.keys $ M.filter (isJust . find (== "rx") . destinations) ms
+  -- print $ msTargetingRx
+  -- let pss = take 20000 $ zip [0 ..] $ iterate press2 (ms, [])
+  -- mapM_ pd pss
+  print $ foldl lcm 1 [3797, 3847, 3877, 4051]
