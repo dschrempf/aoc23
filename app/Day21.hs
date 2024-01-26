@@ -17,10 +17,13 @@ module Main
 where
 
 import Aoc
-import Aoc.Array (parseMatrix)
+import Aoc.Array (neighborsNoDiagonal, parseMatrix)
+import Aoc.Function (nTimesStrict)
+import Aoc.Set (flatten)
 import Data.Attoparsec.Text (Parser)
-import Data.Massiv.Array (Array, B, Ix2)
+import Data.Massiv.Array (Array, B, Ix2, Sz)
 import qualified Data.Massiv.Array as A
+import Data.Maybe (fromJust)
 import Data.Set (Set)
 import qualified Data.Set as S
 
@@ -29,7 +32,7 @@ type Rocks = Set Ix2
 type Positions = Set Ix2
 
 data Tile = Start | Plot | Rock
-  deriving (Show)
+  deriving (Show, Eq)
 
 pInput :: Parser (Array B Ix2 Tile)
 pInput = parseMatrix [('S', Start), ('.', Plot), ('#', Rock)]
@@ -41,9 +44,18 @@ getRocks = A.ifoldlS addRock S.empty
     addRock rocks _ _ = rocks
 
 getStart :: Array B Ix2 Tile -> Ix2
-getStart = undefined
+getStart = fromJust . A.findIndex (== Start)
+
+moveAll :: Sz Ix2 -> Rocks -> Positions -> Positions
+moveAll sz rs ps = ps' S.\\ rs
+  where
+    ps' = flatten $ S.map (S.fromList . neighborsNoDiagonal sz) ps
 
 main :: IO ()
 main = do
-  d <- parseChallengeT (Sample 21 1) pInput
-  print d
+  d <- parseChallengeT (Full 21) pInput
+  let rocks = getRocks d
+      start = getStart d
+      size = A.size d
+  let mv = moveAll size rocks
+  print $ S.size $ nTimesStrict 64 mv (S.singleton start)
