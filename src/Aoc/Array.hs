@@ -15,6 +15,7 @@
 module Aoc.Array
   ( neighbors,
     neighborsNoDiagonal,
+    neighborsNoDiagonalInf,
     neighbors3,
     neighborsNoDiagonal3,
     breakA,
@@ -60,6 +61,16 @@ stencil s p =
   where
     (i :. j) = p
 
+stencilInf :: Ix2 -> [Ix2]
+stencilInf p =
+  [ p'
+    | f <- [pred, id, succ],
+      g <- [pred, id, succ],
+      let p' = f i :. g j
+  ]
+  where
+    (i :. j) = p
+
 -- | Get the 8 neighbors of a field in a two-dimensional grid.
 neighbors :: Sz Ix2 -> Ix2 -> [Ix2]
 neighbors s p =
@@ -76,6 +87,17 @@ neighborsNoDiagonal :: Sz Ix2 -> Ix2 -> [Ix2]
 neighborsNoDiagonal s p =
   [ i' :. j'
     | (i' :. j') <- stencil s p,
+      not (i' == i && j' == j),
+      i' == i || j' == j
+  ]
+  where
+    (i :. j) = p
+
+-- | Like 'neighborsNoDiagnoal' but grid has no bounds.
+neighborsNoDiagonalInf :: Ix2 -> [Ix2]
+neighborsNoDiagonalInf p =
+  [ i' :. j'
+    | (i' :. j') <- stencilInf p,
       not (i' == i && j' == j),
       i' == i || j' == j
   ]
