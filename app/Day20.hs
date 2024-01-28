@@ -176,12 +176,12 @@ pulse1 p (Module (Conjunction ss) n ds) =
       t = if nub (M.elems ss') == [High] then Low else High
    in (Module (Conjunction ss') n ds, [Pulse n d t | d <- ds])
 
-isRxLowPulse :: Pulse -> Bool
-isRxLowPulse (Pulse _ "rx" Low) = True
-isRxLowPulse _ = False
+-- isRxLowPulse :: Pulse -> Bool
+-- isRxLowPulse (Pulse _ "rx" Low) = True
+-- isRxLowPulse _ = False
 
-isRx :: (Int, (Modules, [Pulse])) -> Bool
-isRx (_, (_, ps)) = length (filter isRxLowPulse ps) == 1
+-- isRx :: (Int, (Modules, [Pulse])) -> Bool
+-- isRx (_, (_, ps)) = length (filter isRxLowPulse ps) == 1
 
 press2 :: (Modules, [Pulse]) -> (Modules, [Pulse])
 press2 (ms, _) =
