@@ -17,23 +17,25 @@ module Main
 where
 
 import Aoc
+import Aoc.Tuple (sortTuple)
 import Data.Attoparsec.Text (Parser, char, decimal, endOfLine, sepBy1')
 import Data.Set (Set)
 import qualified Data.Set as S
 
 data Point = Point {xPos :: Int, yPos :: Int, zPos :: Int}
-  deriving (Show, Eq, Ord)
+  deriving (Show, Eq, Read)
+
+instance Ord Point where
+  x `compare` y = (zPos x, xPos x, yPos x) `compare` (zPos y, xPos y, yPos y)
 
 data Brick = Brick {from :: Point, to :: Point}
-  deriving (Show, Eq, Ord)
+  deriving (Show, Eq, Read)
+
+instance Ord Brick where
+  x `compare` y = (to x, from x) `compare` (to y, from y)
 
 pPoint :: Parser Point
 pPoint = Point <$> decimal <* char ',' <*> decimal <* char ',' <*> decimal
-
-sortTuple :: (Ord a) => (a, a) -> (a, a)
-sortTuple (a, b)
-  | a <= b = (a, b)
-  | otherwise = (b, a)
 
 pBrick :: Parser Brick
 pBrick = do
@@ -53,7 +55,7 @@ fallBrick :: Int -> Brick -> Brick
 fallBrick n (Brick f t) = Brick (fallPoint n f) (fallPoint n t)
 
 overlap :: (Int, Int) -> (Int, Int) -> Bool
-overlap (a', b') (c', d') = (a <= c && c <= b) || (d >= a && d <= b)
+overlap (a', b') (c', d') = a <= d && b >= c
   where
     (a, b) = sortTuple (a', b')
     (c, d) = sortTuple (c', d')
@@ -63,7 +65,25 @@ crosses (Brick f1 t1) (Brick f2 t2) =
   overlap (xPos f1, xPos t1) (xPos f2, xPos t2)
     && overlap (yPos f1, yPos t1) (yPos f2, yPos t2)
 
+fallOnTop :: Set Brick -> Brick -> Set Brick
+fallOnTop xs b = let b' = fallBrick (zOfFallingBrick - zOfHighestBrick - 1) b in S.insert b' xs
+  where
+    mHighestBrick = S.lookupMax $ S.filter (crosses b) xs
+    zOfHighestBrick = case mHighestBrick of
+      Nothing -> 0
+      Just highestBrick -> zPos $ to highestBrick
+    zOfFallingBrick = zPos $ from b
+
+fall :: Set Brick -> Set Brick
+fall = S.foldl' fallOnTop S.empty
+
+findNonSupporters :: Set Brick -> Set Brick
+findNonSupporters xs = S.filter predicate xs
+  where
+    predicate x = let xs' = S.delete x xs in xs' == fall xs'
+
 main :: IO ()
 main = do
-  bs <- parseChallengeT (Sample 22 1) pInput
-  mapM_ print [(b1, b2) | b1 <- S.toList bs, b2 <- S.toList bs, b1 /= b2, crosses b1 b2]
+  bs <- parseChallengeT (Full 22) pInput
+  let fallenBs = fall bs
+  print $ S.size $ findNonSupporters fallenBs
