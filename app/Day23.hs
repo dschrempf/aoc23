@@ -25,6 +25,7 @@ import Data.Attoparsec.Text (Parser)
 import Data.Massiv.Array (Array, B, Ix2 (..), Sz (..))
 import qualified Data.Massiv.Array as A
 import Data.Maybe (catMaybes, fromJust)
+import qualified Data.PartialOrd as P
 import Data.Set (Set)
 import qualified Data.Set as S
 
@@ -72,15 +73,22 @@ data Path = Path
   }
   deriving (Show, Eq, Ord)
 
+instance P.PartialOrd Path where
+  (Path curL lstL xsL) <= (Path curR lstR xsR)
+    | curL == curR && lstL == lstR = S.size xsL <= S.size xsR
+    | otherwise = False
+
 move :: Ix2 -> Field -> Path -> [Path]
 move end f p
   | curPos p == end = [p]
   | otherwise =
       catMaybes
-        [moveTo f ix p | ix <- neighborsNoDiagonal (A.size f) (curPos p)]
+        [moveTo1 f ix p | ix <- neighborsNoDiagonal (A.size f) (curPos p)]
 
 moveSet :: Ix2 -> Field -> Set Path -> Set Path
-moveSet end f ps = S.fromList $ concat [move end f p | p <- S.toList ps]
+moveSet end f ps = S.fromList ps'
+  where
+    ps' = concat [move end f p | p <- S.toList ps]
 
 addTile :: Path -> Ix2 -> Maybe Path
 addTile (Path cur lst xs) ix
@@ -92,23 +100,25 @@ addTile (Path cur lst xs) ix
 addTiles :: [Ix2] -> Path -> Maybe Path
 addTiles xs pth = foldM addTile pth xs
 
-moveTo :: Field -> Ix2 -> Path -> Maybe Path
-moveTo f ix p = case f A.! ix of
+moveTo1 :: Field -> Ix2 -> Path -> Maybe Path
+moveTo1 f ix p = case f A.! ix of
+  PathTile -> addTile p ix
   Forest -> Nothing
-  _other -> addTile p ix
+  Slope d -> addTiles [ix, moveNStepsInDirection 1 ix d] p
 
--- PathTile -> addTile p ix
--- Forest -> Nothing
--- Slope d -> addTiles [ix, moveNStepsInDirection 1 ix d] p
+-- moveSet2 :: Ix2 -> Field -> (Set Path, Set Path) -> (Set Path, Set Path)
+-- moveTo2 :: Field -> Ix2 -> Path -> Maybe Path
+-- moveTo2 f ix p = case f A.! ix of
+--   Forest -> Nothing
+--   _other -> addTile p ix
 
 pLength :: Path -> Int
 pLength (Path _ _ xs) = 1 + S.size xs
 
 main :: IO ()
 main = do
-  f <- parseChallengeT (Full 23) pField
+  f <- parseChallengeT (Sample 23 1) pField
   let s = S.singleton $ findStart f
       e = findEnd f
   let ps = fixPoint (moveSet e f) s
-  mapM_ print ps
-  mapM_ print $ S.map pLength ps
+  print $ maximum $ S.map pLength ps
