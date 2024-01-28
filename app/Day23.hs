@@ -22,12 +22,13 @@ import Aoc.Direction (Direction (..), moveNStepsInDirection)
 import Aoc.Function (fixPoint)
 import Control.Monad (foldM)
 import Data.Attoparsec.Text (Parser)
+import Data.List (partition)
 import Data.Massiv.Array (Array, B, Ix2 (..), Sz (..))
 import qualified Data.Massiv.Array as A
 import Data.Maybe (catMaybes, fromJust)
-import qualified Data.PartialOrd as P
 import Data.Set (Set)
 import qualified Data.Set as S
+import Debug.Trace (traceShow, traceShowId)
 
 data Tile = PathTile | Forest | Slope !Direction
   deriving (Eq)
@@ -73,11 +74,6 @@ data Path = Path
   }
   deriving (Show, Eq, Ord)
 
-instance P.PartialOrd Path where
-  (Path curL lstL xsL) <= (Path curR lstR xsR)
-    | curL == curR && lstL == lstR = S.size xsL <= S.size xsR
-    | otherwise = False
-
 move :: Ix2 -> Field -> Path -> [Path]
 move end f p
   | curPos p == end = [p]
@@ -106,19 +102,47 @@ moveTo1 f ix p = case f A.! ix of
   Forest -> Nothing
   Slope d -> addTiles [ix, moveNStepsInDirection 1 ix d] p
 
--- moveSet2 :: Ix2 -> Field -> (Set Path, Set Path) -> (Set Path, Set Path)
--- moveTo2 :: Field -> Ix2 -> Path -> Maybe Path
--- moveTo2 f ix p = case f A.! ix of
---   Forest -> Nothing
---   _other -> addTile p ix
+moveTo2 :: Field -> Ix2 -> Path -> Maybe Path
+moveTo2 f ix p = case f A.! ix of
+  Forest -> Nothing
+  _other -> addTile p ix
+
+-- moveLs2 :: Ix2 -> Field -> ([Path], [Path]) -> ([Path], [Path])
+-- moveLs2 end f (done, ps) = (done <> done', traceShow (length ps'') ps'')
+--   where
+--     ps' =
+--       catMaybes
+--         [ moveTo2 f ix p
+--           | p <- ps,
+--             ix <- neighborsNoDiagonal (A.size f) (curPos p)
+--         ]
+--     (done', ps'') = partition ((== end) . curPos) ps'
+
+moveLs2State :: Ix2 -> Field -> (Int, Set Path, [Path]) -> (Int, Set Path, [Path])
+moveLs2State end f (i, done, ps) =
+  ( succ i,
+    S.union done (S.fromList done'),
+    traceShow i $ traceShow (length ps''') ps'''
+  )
+  where
+    ps' =
+      catMaybes
+        [ moveTo2 f ix p
+          | p <- ps,
+            ix <- neighborsNoDiagonal (A.size f) (curPos p)
+        ]
+    (done', ps'') = partition ((== end) . curPos) ps'
+    ps''' = if i `mod` 1000 == 0 then S.toList $ S.fromList ps'' else ps''
 
 pLength :: Path -> Int
 pLength (Path _ _ xs) = 1 + S.size xs
 
 main :: IO ()
 main = do
-  f <- parseChallengeT (Sample 23 1) pField
+  f <- parseChallengeT (Full 23) pField
   let s = S.singleton $ findStart f
       e = findEnd f
-  let ps = fixPoint (moveSet e f) s
-  print $ maximum $ S.map pLength ps
+  -- let ps = fixPoint (moveSet e f) s
+  -- print $ maximum $ S.map pLength ps
+  let (_, ps2, _) = until (\(_, _, xs) -> null xs) (moveLs2State e f) (0, S.empty, [findStart f])
+  print $ maximum $ S.map pLength ps2
