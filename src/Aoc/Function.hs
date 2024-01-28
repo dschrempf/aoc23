@@ -14,6 +14,7 @@ module Aoc.Function
     nTimesLazy,
     nTimesStrictM,
     nTimesLazyM,
+    fixPoint,
   )
 where
 
@@ -48,3 +49,11 @@ nTimesLazyM n f x = case compare n 1 of
   LT -> error $ "nTimesLazy: n zero or negative: " ++ show n
   EQ -> f x
   GT -> f x >>= nTimesLazyM (n - 1) f
+
+-- | Apply a function until reaching a fix point.
+fixPoint :: (Eq a) => (a -> a) -> a -> a
+fixPoint f x
+  | x' == x = x'
+  | otherwise = fixPoint f x'
+  where
+    x' = f x
