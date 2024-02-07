@@ -19,7 +19,6 @@ where
 import Aoc
 import Aoc.Array (neighborsNoDiagonal, parseMatrix)
 import Aoc.Direction (Direction (..), moveNStepsInDirection)
-import Aoc.Function (fixPoint)
 import Control.Monad (foldM)
 import Data.Attoparsec.Text (Parser)
 import Data.List (partition)
@@ -28,7 +27,7 @@ import qualified Data.Massiv.Array as A
 import Data.Maybe (catMaybes, fromJust)
 import Data.Set (Set)
 import qualified Data.Set as S
-import Debug.Trace (traceShow, traceShowId)
+import Debug.Trace (traceShow)
 
 data Tile = PathTile | Forest | Slope !Direction
   deriving (Eq)
