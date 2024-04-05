@@ -14,7 +14,7 @@
       theseHpkgNames = [
         "aoc23"
       ];
-      thisGhcVersion = "ghc94";
+      thisGhcVersion = "ghc96";
       hOverlay = selfn: supern: {
         haskell = supern.haskell // {
           packageOverrides = selfh: superh:
@@ -49,7 +49,7 @@
             ];
             buildInputs = [ ];
             doBenchmark = true;
-            # withHoogle = true;
+            withHoogle = true;
           };
         };
     in
